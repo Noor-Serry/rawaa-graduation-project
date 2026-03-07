@@ -1,5 +1,3 @@
-import com.android.utils.cxx.io.removeExtensionIfPresent
-
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -52,6 +50,9 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+
+    //Splash Api
+    implementation(libs.androidx.core.splashscreen)
 }
 
 tasks.register("generateFeature") {
