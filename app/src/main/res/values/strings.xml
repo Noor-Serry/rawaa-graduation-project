@@ -1,3 +1,15 @@
 <resources>
     <string name="app_name">Rawaa</string>
+    <string name="onboarding1_title">نظم حياتك الدراسية بسهولة</string>
+    <string name="onboarding1_description">تابع محاضراتك وواجباتك و درجاتك فى مكان واحد منظم و بسيط .</string>
+    <string name="onboarding2_title">اعرف مستواك أول بأول</string>
+    <string name="onboarding2_description">تقارير ذكية توضح تقدمك الأكاديمي وتحسب معدلك بسهولة.</string>
+    <string name="onboarding3_title">جاهز تبدأ مع ROAA؟</string>
+    <string name="onboarding3_description">ابدأ استخدام المنصة الآن وكن جزءًا من تجربة تعليمية أذكى.</string>
+    <string name="skip">تخطي</string>
+    <string name="previous">السابق</string>
+    <string name="next">التالي</string>
+    <string name="start_now">ابدأ الان</string>
+    <string name="login">لدي حساب بالفعل</string>
+    <string name="already_have_an_account">لدي حساب بالفعل</string>
 </resources>

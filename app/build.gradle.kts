@@ -1,6 +1,8 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
+
 }
 
 android {
@@ -47,12 +49,23 @@ dependencies {
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
+    implementation(libs.androidx.foundation)
     implementation(libs.androidx.compose.material3)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
-
     //Splash Api
     implementation(libs.androidx.core.splashscreen)
+    // koin
+   // val koinVersion = "4.1.1"
+   // implementation(project.dependencies.platform("io.insert-koin:koin-bom:$koinVersion"))
+    implementation(platform(libs.koin.bom))
+    implementation(libs.koin.core)
+    implementation(libs.koin.androidx.compose)
+    implementation(libs.koin.android)
+    //navigation3
+    implementation(libs.androidx.navigation3.ui)
+    implementation(libs.androidx.navigation3.runtime)
+    implementation(projects.designSystem)
 }
 
 tasks.register("generateFeature") {
@@ -131,10 +144,17 @@ fun generateScreenContent(featureName: String, packagePath: String) = """
     import androidx.compose.runtime.LaunchedEffect
     import kotlinx.coroutines.flow.Flow
     import kotlinx.coroutines.flow.collectLatest
+    import org.koin.compose.viewmodel.koinViewModel
+    import androidx.compose.runtime.collectAsState
 
     @Composable
-    fun ${featureName}Screen(viewModel: ${featureName}ViewModel) {
-
+    fun ${featureName}Screen(viewModel: ${featureName}ViewModel = koinViewModel()) {
+        val state by viewModel.state.collectAsState()
+        
+        ${featureName}Content(
+            state = state,
+            interactionListener = viewModel
+        )
     }
 
     @Composable
@@ -157,7 +177,7 @@ fun generateScreenContent(featureName: String, packagePath: String) = """
     }
 """.trimIndent()
 
-fun generateViewModelContent(featureName: String, packagePath: String,) = """
+fun generateViewModelContent(featureName: String, packagePath: String) = """
     package $packagePath
     
     import ${packagePath.removeSuffix(".screens.${featureName.lowercase()}")}.base.BaseViewModel
@@ -180,13 +200,17 @@ fun generateMapperContent(packagePath: String) = """
 fun generateEffectContent(featureName: String, packagePath: String) = """
     package $packagePath
 
-    sealed interface ${featureName}Effect
+    sealed interface ${featureName}Effect {
+    
+    }
 """.trimIndent()
 
 fun generateListenerContent(featureName: String, packagePath: String) = """
     package $packagePath
 
-    interface ${featureName}InteractionListener
+    interface ${featureName}InteractionListener {
+    
+    }
 """.trimIndent()
 
 fun generateUiStateContent(featureName: String, packagePath: String) = """
