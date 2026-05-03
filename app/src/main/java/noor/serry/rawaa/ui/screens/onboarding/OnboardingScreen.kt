@@ -4,12 +4,12 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
@@ -18,8 +18,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.positionInWindow
@@ -29,12 +31,15 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import noor.serry.designsystem.components.StatusBarBackground
+import noor.serry.designsystem.design.AppTheme
 import noor.serry.rawaa.BackStackProvider
 import noor.serry.rawaa.R
-import noor.serry.rawaa.ui.navigation.AppRoute
+import noor.serry.rawaa.ui.navigation.base.AppRoute
 import noor.serry.rawaa.ui.screens.onboarding.component.AnimatedSkipText
 import noor.serry.rawaa.ui.screens.onboarding.component.OnboardingIndicators
 import noor.serry.rawaa.ui.screens.onboarding.component.OnboardingPage
+import noor.serry.rawaa.ui.screens.studentScreens.menu.StudentEntryPoint
 import org.koin.androidx.compose.koinViewModel
 import kotlin.math.max
 
@@ -63,9 +68,10 @@ private fun OnboardingContent(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .statusBarsPadding()
+            .background(AppTheme.color.bg)
             .navigationBarsPadding()
     ) {
+        StatusBarBackground(color = AppTheme.color.bg)
         AnimatedSkipText(
             isVisible = pagerState.currentPage != OnboardingData.screens.size - 1,
             textId = R.string.skip,
@@ -123,11 +129,16 @@ private fun OnboardingContent(
 @Composable
 private fun HandleEffects(effects: Flow<OnboardingEffect>) {
     val navigationBackStack = BackStackProvider.current
+
     LaunchedEffect(Unit) {
         effects.collectLatest { effect ->
             when (effect) {
-                OnboardingEffect.NavigateToLogin -> navigationBackStack.add(AppRoute.Login)
+                OnboardingEffect.NavigateToLogin ->
+                    navigationBackStack.add(AppRoute.StudentEntry)
                 is OnboardingEffect.ShowError -> {}
+                else -> {
+                    navigationBackStack.add(AppRoute.Register)
+                }
             }
         }
     }
@@ -136,8 +147,10 @@ private fun HandleEffects(effects: Flow<OnboardingEffect>) {
 fun PagerState.goToNextPage(scope: CoroutineScope) {
     if (currentPage < pageCount - 1) {
         scope.launch {
-            animateScrollToPage(currentPage + 1,
-                animationSpec = tween(500))
+            animateScrollToPage(
+                currentPage + 1,
+                animationSpec = tween(500)
+            )
         }
     }
 }

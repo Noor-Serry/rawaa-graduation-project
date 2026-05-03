@@ -10,14 +10,16 @@ import noor.serry.designsystem.design.AppTheme
 
 
 @Composable
-fun Icon(painter: Painter,
-         modifier: Modifier = Modifier,
-         contentDescription : String? = null,
-         tint : Color = AppTheme.color.primary
+fun Icon(
+    painter: Painter,
+    modifier: Modifier = Modifier,
+    contentDescription: String? = null,
+    tint: Color? = AppTheme.color.primary
 ) {
-    Image(painter = painter,
+    Image(
+        painter = painter,
         contentDescription = contentDescription,
         modifier = modifier,
-        colorFilter = ColorFilter.tint(tint)
+        colorFilter = tint?.let { ColorFilter.tint(it) }
     )
 }

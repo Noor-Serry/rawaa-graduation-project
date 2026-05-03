@@ -5,6 +5,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import noor.serry.designsystem.R
 
@@ -32,20 +33,23 @@ val cairoTypography = AppTypography(
         large = TextStyle(
             fontFamily = cairo,
             fontWeight = FontWeight.Bold,
-            fontSize = 32.sp,           // font-4xl
-            lineHeight = (32 * 1.25).sp // line-height-1-25
+            fontSize = 30.sp,
+            lineHeight = (36).sp,
+            letterSpacing = 0.sp
         ),
         medium = TextStyle(
             fontFamily = cairo,
             fontWeight = FontWeight.Bold,
             fontSize = 28.sp,           // font-3xl
-            lineHeight = (28 * 1.25).sp
+            lineHeight = (28 * 1.25).sp,
+            letterSpacing = 0.sp
         ),
         small = TextStyle(
             fontFamily = cairo,
             fontWeight = FontWeight.Bold,
             fontSize = 24.sp,           // font-2xl
-            lineHeight = 24.sp
+            lineHeight = 24.sp,
+            letterSpacing = 0.sp
         )
     ),
     body = SizedTextStyle(
@@ -53,19 +57,22 @@ val cairoTypography = AppTypography(
             fontFamily = cairo,
             fontWeight = FontWeight.SemiBold,
             fontSize = 18.sp,           // font-lg
-            lineHeight = (18 * 1.5).sp  // line-height-1-5
+            lineHeight = (18 * 1.5).sp,  // line-height-1-5
+            letterSpacing = 0.sp
         ),
         medium = TextStyle(
             fontFamily = cairo,
             fontWeight = FontWeight.Medium,
             fontSize = 16.sp,
-            lineHeight = (16 * 1.5).sp
+            lineHeight = (16 * 1.5).sp,
+            letterSpacing = 0.sp
         ),
         small = TextStyle(
             fontFamily = cairo,
             fontWeight = FontWeight.Medium,
             fontSize = 14.sp,           // font-sm
-            lineHeight = (24).sp
+            lineHeight = (24).sp,
+            letterSpacing = 0.sp
         )
     ),
     label = SizedTextStyle(
@@ -73,19 +80,22 @@ val cairoTypography = AppTypography(
             fontFamily = cairo,
             fontWeight = FontWeight.SemiBold,
             fontSize = 14.sp,           // font-sm
-            lineHeight = (14 * 1.75).sp
+            lineHeight = (14 * 1.75).sp,
+            letterSpacing = 0.sp
         ),
         medium = TextStyle(
             fontFamily = cairo,
             fontWeight = FontWeight.Normal,
             fontSize = 12.sp,
-            lineHeight = (12 * 1.75).sp
+            lineHeight = (16).sp,
+            letterSpacing = 0.sp
         ),
         small = TextStyle(
             fontFamily = cairo,
             fontWeight = FontWeight.Normal,
             fontSize = 10.sp,
-            lineHeight = (10 * 1.75).sp
+            lineHeight = (10 * 1.75).sp,
+            letterSpacing = 0.sp
         )
     )
 )

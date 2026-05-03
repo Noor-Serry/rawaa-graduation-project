@@ -30,6 +30,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
     compileOptions {
@@ -51,13 +52,12 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.foundation)
     implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.foundation.layout)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     //Splash Api
     implementation(libs.androidx.core.splashscreen)
     // koin
-   // val koinVersion = "4.1.1"
-   // implementation(project.dependencies.platform("io.insert-koin:koin-bom:$koinVersion"))
     implementation(platform(libs.koin.bom))
     implementation(libs.koin.core)
     implementation(libs.koin.androidx.compose)
@@ -66,6 +66,29 @@ dependencies {
     implementation(libs.androidx.navigation3.ui)
     implementation(libs.androidx.navigation3.runtime)
     implementation(projects.designSystem)
+    // google sign in
+    implementation("com.google.android.gms:play-services-auth:21.2.0")
+    // Credential Manager (الطريقة الحديثة)
+    implementation("androidx.credentials:credentials:1.3.0")
+    implementation("androidx.credentials:credentials-play-services-auth:1.3.0")
+    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
+
+    // Koin
+    implementation(libs.koin.compose.viewmodel.navigation)
+    implementation(libs.koin.core)
+    // Ktor
+    implementation(libs.ktor.client.auth)
+    implementation(libs.ktor.client.core)
+    api(libs.ktor.serialization.kotlinx.json)
+    api(libs.ktor.client.content.negotiation)
+    implementation(libs.ktor.logging)
+    implementation(libs.ktor.client.okhttp)
+    //datastore
+    implementation(libs.androidx.datastore.preferences.v121)
+
+
+    implementation("androidx.compose.material:material-icons-extended")
+
 }
 
 tasks.register("generateFeature") {
@@ -146,6 +169,7 @@ fun generateScreenContent(featureName: String, packagePath: String) = """
     import kotlinx.coroutines.flow.collectLatest
     import org.koin.compose.viewmodel.koinViewModel
     import androidx.compose.runtime.collectAsState
+    import androidx.compose.runtime.getValue
 
     @Composable
     fun ${featureName}Screen(viewModel: ${featureName}ViewModel = koinViewModel()) {

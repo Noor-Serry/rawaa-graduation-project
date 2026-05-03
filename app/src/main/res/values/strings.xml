@@ -10,6 +10,102 @@
     <string name="previous">السابق</string>
     <string name="next">التالي</string>
     <string name="start_now">ابدأ الان</string>
-    <string name="login">لدي حساب بالفعل</string>
+    <string name="login">تسجيل الدخول</string>
     <string name="already_have_an_account">لدي حساب بالفعل</string>
+    <string name="welcome">مرحباً بك!</string>
+    <string name="login_to_continue">سجل دخولك لمتابعة رحلتك التعليمية</string>
+    <string name="rowaa">رواء</string>
+    <string name="egyption_unversity">الجامعات المصرية</string>
+    <string name="login_as">تسجيل الدخول كـ</string>
+    <string name="student">طالب</string>
+    <string name="unversity_email">البريد الجامعي</string>
+    <string name="email">البريد الالكتروني</string>
+    <string name="password">كلمه المرور</string>
+    <string name="forgot_password">نسيت كلمة المرور؟</string>
+    <string name="or">أو</string>
+    <string name="login_with_google">تسجيل الدخول بواسطة Google</string>
+    <string name="do_not_have_account">ليس لديك حساب؟</string>
+    <string name="create_new_account">إنشاء حساب جديد</string>
+    <string name="by_using_rawaa_you_agree">باستخدام رواء، أنت توافق على</string>
+    <string name="privacy_polices">سياسة الخصوصية</string>
+    <string name="usage_conditions">شروط الاستخدام</string>
+    <!-- Register Screen - Navigation -->
+    <string name="back">رجوع</string>
+
+    <!-- Register Header -->
+    <string name="join_rawaa_academic_community">انضم إلى مجتمع رواء الأكاديمي</string>
+
+    <!-- Page Labels -->
+    <string name="personal_info">المعلومات الشخصية</string>
+    <string name="academic_info">المعلومات الأكاديمية</string>
+    <string name="account_security">تأمين الحساب</string>
+
+    <!-- Step Indicators -->
+    <string name="step_1_of_3">الخطوة 1 من 3</string>
+    <string name="step_2_of_3">الخطوة 2 من 3</string>
+    <string name="step_3_of_3">الخطوة 3 من 3</string>
+
+    <!-- Page 1 - Personal Info -->
+    <string name="full_name">الاسم الكامل</string>
+    <string name="enter_full_name">أدخل اسمك الكامل</string>
+    <string name="phone">رقم الهاتف</string>
+    <string name="sign_up_with_google">التسجيل بواسطة Google</string>
+    <string name="already_have_account">لديك حساب بالفعل؟</string>
+
+    <!-- Page 2 - Academic Info -->
+    <string name="university">الجامعة</string>
+    <string name="job_role">الدور الوظيفي</string>
+    <string name="teacher">أستاذ</string>
+    <string name="stakeholder">إداري</string>
+    <string name="admin">مشرف</string>
+
+    <!-- Page 3 - Account Security -->
+    <string name="confirm_password">تأكيد كلمة المرور</string>
+    <string name="strong_password">كلمة مرور قوية</string>
+    <string name="re_enter_password">أعد إدخال كلمة المرور</string>
+    <string name="passwords_do_not_match">كلمتا المرور غير متطابقتين</string>
+    <string name="password_requirements_title">يجب أن تحتوي كلمة المرور على:</string>
+    <string name="password_req_length">8 أحرف على الأقل</string>
+    <string name="password_req_uppercase">حرف كبير واحد على الأقل</string>
+    <string name="password_req_number">رقم واحد على الأقل</string>
+    <string name="create_account">إنشاء الحساب</string>
+
+    <string name="welcome_message">مرحباً، %s!</string>
+    <string name="welcome_subtitle">لنبدأ يوماً دراسياً مثمراً</string>
+    <string name="cgpa">المعدل التراكمي</string>
+    <string name="pending_assignments">واجب قادم</string>
+    <string name="active_courses">مقرر نشط</string>
+
+    <!-- Sections -->
+    <string name="today_schedule">جدول اليوم</string>
+    <string name="upcoming_assignments">الواجبات القادمة</string>
+    <string name="course_progress">تقدم المقررات</string>
+    <string name="quick_actions">إجراءات سريعة</string>
+    <string name="view_all">عرض الكل</string>
+
+    <!-- Quick Actions -->
+    <string name="assignments">الواجبات</string>
+    <string name="my_courses">مقرراتي</string>
+    <string name="schedule">الجدول</string>
+    <string name="grades">الدرجات</string>
+    <string name="pending_count">واجب قادم</string>
+    <string name="active_count">مقررات نشطة</string>
+    <string name="weekly_schedule">جدول الأسبوع</string>
+    <string name="view_records">عرض السجل</string>
+
+    <!-- Bottom Navigation -->
+    <string name="nav_home">الرئيسية</string>
+    <string name="nav_courses">المقررات</string>
+    <string name="nav_schedule">الجدول</string>
+    <string name="nav_notifications">الإشعارات</string>
+    <string name="nav_profile">الملف</string>
+
+    <!-- Drawer / Menu -->
+    <string name="settings">الإعدادات</string>
+    <string name="help_and_support">المساعدة والدعم</string>
+    <string name="privacy_policy">سياسة الخصوصية</string>
+    <string name="logout">تسجيل الخروج</string>
+    <string name="version">الإصدار 1.0.0</string>
+    <string name="copyright">© 2026 رواء - جميع الحقوق محفوظة</string>
+    <string name="version_info">الإصدار 1.0.0</string>
 </resources>

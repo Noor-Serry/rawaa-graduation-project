@@ -1,4 +1,4 @@
-package noor.serry.rawaa.ui.navigation
+package noor.serry.rawaa.ui.navigation.base
 
 import kotlinx.serialization.Serializable
 import androidx.navigation3.runtime.NavKey
@@ -12,4 +12,6 @@ sealed interface AppRoute : NavKey {
     data object Register : AppRoute
     @Serializable
     data object Login : AppRoute
+    @Serializable
+    data object StudentEntry : AppRoute
 }

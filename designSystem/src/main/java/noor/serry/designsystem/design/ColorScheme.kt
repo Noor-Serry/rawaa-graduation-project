@@ -8,7 +8,8 @@ import androidx.compose.ui.graphics.Color
 data class AppColorScheme(
     // Brand
     val primary: Color,
-    val primaryLight: Color,
+    val primaryDark: Color,
+    val primaryLight : Color,
     val secondary: Color,
     val secondaryHover: Color,
 
@@ -50,10 +51,11 @@ data class AppColorScheme(
 val darkThemeColors = AppColorScheme(
     // Brand
     primary = Color(0xFF1F2C47),          // primary-500
-    primaryLight = Color(0xFF11345F),     // primary-900
+    primaryDark = Color(0xFF0F172A),     // primary-900
+    primaryLight = Color(0xFF2D3F5F),     // primary-900
 
-    secondary = Color(0xFFE2BF32),        // secondary-500
-    secondaryHover = Color(0xFFC9AA2C),   // secondary-400
+    secondary = Color(0xFFFACC15),        // secondary-500
+    secondaryHover = Color(0xFFFEF3C7),   // secondary-400
 
     // Text
     text = Color(0xFF000000),             // primary-100
@@ -62,14 +64,14 @@ val darkThemeColors = AppColorScheme(
 
     // Background
     bg = Color(0xFFFFFFFF),               // black (mapped to #ffffff in dark primitives)
-    bgSecondary = Color(0xFFF3F3F3),      // gray-900
-    bgHover = Color(0xFFECECEC),          // gray-800
-    bgDisabled = Color(0xFFECECEC),       // gray-800
+    bgSecondary = Color(0xCCFFFFFF),      // gray-900
+    bgHover = Color(0xFFF8FAFC),          // gray-800
+    bgDisabled = Color(0xFFF3F4F6),       // gray-800
 
     // Border
-    border = Color(0xFFE2E8F0),           // gray-700
+    border = Color(0xFFE5E7EB),           // gray-700
     borderHover = Color(0xFF828282),      // gray-600
-    borderFocus = Color(0xFF192339),      // primary-400
+    borderFocus = Color(0xFF1F2C47),      // primary-400
 
     // Success
     success = Color(0xFF00790E),          // success-500
@@ -84,8 +86,8 @@ val darkThemeColors = AppColorScheme(
     warningBorder = Color(0xFFFFE6B0),    // warning-700
 
     // Error
-    error = Color(0xFFA70000),            // error-500
-    errorBg = Color(0xFFF8E6E6),          // error-950
+    error = Color(0xFFEF4444),            // error-500
+    errorBg = Color(0xFFFEF2F2),          // error-950
     errorText = Color(0xFF8C0000),        // error-300
     errorBorder = Color(0xFFEAB0B0),      // error-700
 )
