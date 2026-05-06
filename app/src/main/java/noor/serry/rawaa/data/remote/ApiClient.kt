@@ -315,6 +315,7 @@ class ApiClient(
     }
 }
 
+
 // ─── Attendance record DTO (not in the shared file to keep it self-contained) ─
 
 @kotlinx.serialization.Serializable
@@ -325,3 +326,4 @@ data class AttendanceRecordDto(
     val status: String,   // present / absent / late / excused
     val notes: String? = null,
 )
+

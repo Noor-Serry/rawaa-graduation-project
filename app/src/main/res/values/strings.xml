@@ -108,4 +108,6 @@
     <string name="version">الإصدار 1.0.0</string>
     <string name="copyright">© 2026 رواء - جميع الحقوق محفوظة</string>
     <string name="version_info">الإصدار 1.0.0</string>
+    <string name="nav_assessment">التقييم</string>
+    <string name="nav_students">الطلاب</string>
 </resources>

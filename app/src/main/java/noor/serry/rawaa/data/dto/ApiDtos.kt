@@ -51,10 +51,14 @@ data class GoogleLoginRequest(
 @Serializable
 data class AuthResponseDto(
     val token: String,
-    @SerialName("token_type") val tokenType: String = "Bearer",
-    @SerialName("expires_in") val expiresIn: Int = 86400,
+    @SerialName("token_type") val tokenType: String,
+    @SerialName("expires_in") val expiresIn: Int,
     val user: UserDto,
-    val university: UniversityRefDto? = null,
+    val university: UniversityRefDto
+)
+@Serializable
+data class Token(
+    @SerialName("token") val value : String
 )
 
 @Serializable
@@ -73,7 +77,6 @@ data class UserDto(
     val email: String,
     val role: String,
     val avatar: String? = null,
-    @SerialName("is_active") val isActive: Int = 1,
     // nested profile — present for student / doctor / employee roles
     val profile: UserProfileDto? = null,
 )

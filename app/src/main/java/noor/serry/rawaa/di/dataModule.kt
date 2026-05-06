@@ -21,7 +21,7 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 
 /** Base URL — change to your deployed backend host. */
-private const val BASE_URL = "https://abdallah-elrefai.com/university-api-v3"
+private const val BASE_URL = "https://abdallah-elrefai.com/university-api-v4"
 private val Context.dataStore by preferencesDataStore(name = "rawaa_prefs")
 
 val dataModule = module {

@@ -1,5 +1,6 @@
 package noor.serry.rawaa.di
 
+import noor.serry.rawaa.ui.MainViewModel
 import noor.serry.rawaa.ui.base.DefaultDispatcherProvider
 import noor.serry.rawaa.ui.base.DispatcherProvider
 import noor.serry.rawaa.ui.screens.courses_student.CoursesViewModel
@@ -38,4 +39,6 @@ val uiModule = module{
     viewModelOf(::ProfileViewModel)
     viewModelOf(::ProfileTeacherViewModel)
     viewModelOf(::MenuViewModel)
+
+    singleOf(::MainViewModel)
 }

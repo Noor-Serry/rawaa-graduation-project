@@ -14,4 +14,7 @@ sealed interface AppRoute : NavKey {
     data object Login : AppRoute
     @Serializable
     data object StudentEntry : AppRoute
+
+@Serializable
+data object TeacherEntry : AppRoute
 }

@@ -33,7 +33,9 @@ import noor.serry.designsystem.components.BaseButton
 import noor.serry.designsystem.components.LabelInputField
 import noor.serry.designsystem.components.Text
 import noor.serry.designsystem.design.AppTheme
+import noor.serry.rawaa.BackStackProvider
 import noor.serry.rawaa.R
+import noor.serry.rawaa.ui.navigation.base.AppRoute
 import noor.serry.rawaa.ui.screens.login.component.ActionBanner
 import noor.serry.rawaa.ui.screens.login.component.FormContainer
 import noor.serry.rawaa.ui.screens.login.component.LoginFooter
@@ -42,19 +44,12 @@ import noor.serry.rawaa.ui.screens.login.component.UserRoleCard
 
 @Composable
 fun LoginScreen(
-    onLoginStudent: () -> Unit = {},
-    onLoginTeacher: () -> Unit = {},
-    onLoginAdmin: () -> Unit = {},
-    onNavigateToRegister: () -> Unit = {},
     viewModel: LoginViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
 
     HandleEffects(
         effects = viewModel.effect,
-        onLoginStudent = onLoginStudent,
-        onLoginTeacher = onLoginTeacher,
-        onNavigateToRegister = onNavigateToRegister,
     )
 
     LoginContent(state = state, interactionListener = viewModel)
@@ -129,8 +124,8 @@ private fun LoginContent(
                 label = stringResource(R.string.email),
                 icon = painterResource(noor.serry.designsystem.R.drawable.mail),
                 modifier = Modifier.padding(top = 24.dp),
-             //   isError = state.emailError != null,
-              //  errorMessage = state.emailError,
+                isError = state.emailError != null,
+                errorMessage = state.emailError,
             )
 
             LabelInputField(
@@ -141,8 +136,8 @@ private fun LoginContent(
                 icon = painterResource(R.drawable.lock),
                 isPassword = true,
                 modifier = Modifier.padding(top = 16.dp),
-             //   isError = state.passwordError != null,
-             //   errorMessage = state.passwordError,
+                isError = state.passwordError != null,
+                errorMessage = state.passwordError,
             )
 
             LabelInputField(
@@ -152,8 +147,8 @@ private fun LoginContent(
                 label = "رمز الجامعة",
                 icon = painterResource(noor.serry.designsystem.R.drawable.mail),
                 modifier = Modifier.padding(top = 16.dp),
-//                isError = state.slugError != null,
-//                errorMessage = state.slugError,
+                isError = state.slugError != null,
+                errorMessage = state.slugError,
             )
 
             state.generalError?.let {
@@ -215,17 +210,24 @@ private fun LoginContent(
 
 @Composable
 private fun HandleEffects(
-    effects: Flow<LoginEffect>,
-    onLoginStudent: () -> Unit,
-    onLoginTeacher: () -> Unit,
-    onNavigateToRegister: () -> Unit,
+    effects: Flow<LoginEffect>
 ) {
+    val backStack = BackStackProvider.current
     LaunchedEffect(Unit) {
         effects.collectLatest { effect ->
             when (effect) {
-                LoginEffect.NavigateToStudentHome    -> onLoginStudent()
-                LoginEffect.NavigateToTeacherHome    -> onLoginTeacher()
-                LoginEffect.NavigateToRegister       -> onNavigateToRegister()
+                LoginEffect.NavigateToStudentHome    -> {
+                    backStack.clear()
+                    backStack.add(AppRoute.StudentEntry)
+                }
+                LoginEffect.NavigateToTeacherHome    -> {
+                    backStack.clear()
+                    backStack.add(AppRoute.TeacherEntry)
+                }
+                LoginEffect.NavigateToRegister       -> {
+                    backStack.clear()
+                    backStack.add(AppRoute.Register)
+                }
                 LoginEffect.NavigateToForgotPassword -> { /* TODO */ }
             }
         }

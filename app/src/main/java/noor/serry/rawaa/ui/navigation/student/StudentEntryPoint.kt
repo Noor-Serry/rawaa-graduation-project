@@ -1,14 +1,11 @@
-package noor.serry.rawaa.ui.screens.studentScreens.menu
+package noor.serry.rawaa.ui.navigation.student
 
 import android.annotation.SuppressLint
-import android.util.Log
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -23,10 +20,9 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import noor.serry.designsystem.design.AppTheme
-import noor.serry.rawaa.ui.navigation.student.StudentRouteKeys
-import noor.serry.rawaa.ui.navigation.student.studentEntryProvider
 import noor.serry.rawaa.ui.screens.home_student.components.HomeNavTab
 import noor.serry.rawaa.ui.screens.home_student.components.HomeStudentBottomNav
+import noor.serry.rawaa.ui.screens.studentScreens.menu.MenuScreen
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable

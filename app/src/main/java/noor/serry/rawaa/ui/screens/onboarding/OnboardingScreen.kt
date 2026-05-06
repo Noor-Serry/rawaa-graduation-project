@@ -18,10 +18,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.positionInWindow
@@ -39,7 +37,6 @@ import noor.serry.rawaa.ui.navigation.base.AppRoute
 import noor.serry.rawaa.ui.screens.onboarding.component.AnimatedSkipText
 import noor.serry.rawaa.ui.screens.onboarding.component.OnboardingIndicators
 import noor.serry.rawaa.ui.screens.onboarding.component.OnboardingPage
-import noor.serry.rawaa.ui.screens.studentScreens.menu.StudentEntryPoint
 import org.koin.androidx.compose.koinViewModel
 import kotlin.math.max
 
@@ -133,10 +130,13 @@ private fun HandleEffects(effects: Flow<OnboardingEffect>) {
     LaunchedEffect(Unit) {
         effects.collectLatest { effect ->
             when (effect) {
-                OnboardingEffect.NavigateToLogin ->
-                    navigationBackStack.add(AppRoute.StudentEntry)
+                OnboardingEffect.NavigateToLogin -> {
+                    navigationBackStack.clear()
+                    navigationBackStack.add(AppRoute.Login)
+                }
                 is OnboardingEffect.ShowError -> {}
                 else -> {
+                    navigationBackStack.clear()
                     navigationBackStack.add(AppRoute.Register)
                 }
             }

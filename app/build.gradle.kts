@@ -53,6 +53,7 @@ dependencies {
     implementation(libs.androidx.foundation)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.foundation.layout)
+    implementation(libs.androidx.constraintlayout)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     //Splash Api
@@ -88,6 +89,9 @@ dependencies {
 
 
     implementation("androidx.compose.material:material-icons-extended")
+
+    implementation(libs.androidx.constraintlayout.compose)
+
 
 }
 
