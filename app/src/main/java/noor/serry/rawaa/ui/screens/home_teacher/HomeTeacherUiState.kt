@@ -9,16 +9,10 @@ data class HomeTeacherUiState(
     val doctorName: String = "",
     val totalStudents: Int = 0,
     val totalCourses: Int = 0,
-    val pendingGrading: Int = 0,
+    // NOTE: pendingGrading removed — DoctorDashboardDto has no such field.
+    //       The backend does not return a pending-grading count.
     val todaySchedule: List<ScheduleSessionDto> = emptyList(),
     val courses: List<CourseDto> = emptyList(),
     val upcomingExams: List<UpcomingExamDto> = emptyList(),
     val error: String? = null,
 )
-
-sealed interface HomeTeacherEffect {
-    data object NavigateToCourses : HomeTeacherEffect
-    data object NavigateToGrading : HomeTeacherEffect
-    data class NavigateToCourseDetail(val courseId: Int) : HomeTeacherEffect
-    data class ShowError(val message: String) : HomeTeacherEffect
-}

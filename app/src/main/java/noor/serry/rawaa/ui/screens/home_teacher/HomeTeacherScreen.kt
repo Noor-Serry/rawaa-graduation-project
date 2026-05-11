@@ -55,25 +55,40 @@ fun HomeTeacherScreen(
             .background(AppTheme.color.bg),
         contentPadding = PaddingValues(bottom = 24.dp),
     ) {
-        // Header banner
+        // ── Header banner ──────────────────────────────────────────────────
+        // Shows: doctorName (GET /api/auth/me → UserDto.name)
+        //        totalStudents (DoctorDashboardDto.totalStudents)
+        //        totalCourses  (DoctorDashboardDto.totalCourses)
+        //
+        // "مهمة معلقة" stat REMOVED — DoctorDashboardDto has no pending-tasks count.
         item {
             HomeTeacherHeader(
                 name = state.doctorName,
-                pendingTasks = state.pendingGrading,
                 totalStudents = state.totalStudents,
                 activeCourses = state.totalCourses,
             )
         }
 
-        // Quick actions
+        // ── Quick actions ──────────────────────────────────────────────────
+        // Only two actions are kept:
+        //   • "التصحيح" → navigates to grading/assessment screen (endpoint exists)
+        //   • "إدارة المقررات" → navigates to courses list (GET /api/courses)
+        //
+        // Removed: "إضافة مقرر" (admin-only endpoint), "واجب جديد" (no endpoint),
+        //          "التقارير" (admin-only endpoint).
         item {
             QuickActionsSection(
-                onAddCourse = { backStack.add(TeacherRouteKeys.Courses) },
                 onGrading = { viewModel.onStartGradingClicked() },
+                onViewCourses = { viewModel.onViewAllCoursesClicked() },
             )
         }
 
-        // Today's lectures
+        // ── Today's lectures ───────────────────────────────────────────────
+        // Source: DoctorDashboardDto.schedule (List<ScheduleSessionDto>)
+        // Displayed fields: courseName, startTime, endTime, roomName, enrolled
+        //
+        // The "ابدأ" button from the original design is REMOVED — there is no
+        // "start lecture" endpoint in the backend. Clicking it would be a no-op.
         if (state.todaySchedule.isNotEmpty()) {
             item {
                 SectionHeader(
@@ -86,7 +101,28 @@ fun HomeTeacherScreen(
             }
         }
 
-        // My courses
+        // ── Upcoming exams ─────────────────────────────────────────────────
+        // Source: DoctorDashboardDto.upcomingExams (List<UpcomingExamDto>)
+        // Displayed fields: title, type, courseName, startAt
+        if (state.upcomingExams.isNotEmpty()) {
+            item {
+                SectionHeader(
+                    title = "الاختبارات القادمة",
+                    onViewAll = { backStack.add(TeacherRouteKeys.Assessment) },
+                )
+            }
+            items(state.upcomingExams.take(3)) { exam ->
+                UpcomingExamCard(exam = exam)
+            }
+        }
+
+        // ── My courses ─────────────────────────────────────────────────────
+        // Source: DoctorDashboardDto.courses (List<CourseDto>)
+        // Displayed fields: name, code, enrolledCount, maxStudents, isActive
+        //
+        // REMOVED from card:
+        //   • "85% المعدل" — no average/grade field in CourseDto
+        //   • "12 واجب"    — no assignment count in CourseDto or DoctorDashboardDto
         if (state.courses.isNotEmpty()) {
             item {
                 SectionHeader(
@@ -101,16 +137,16 @@ fun HomeTeacherScreen(
                 )
             }
         }
-
-        // Student performance this week
-        item { StudentPerformanceCard() }
     }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Header
+// ─────────────────────────────────────────────────────────────────────────────
 
 @Composable
 private fun HomeTeacherHeader(
     name: String,
-    pendingTasks: Int,
     totalStudents: Int,
     activeCourses: Int,
 ) {
@@ -154,30 +190,37 @@ private fun HomeTeacherHeader(
 
             Spacer(Modifier.height(20.dp))
 
+            // Only two real stats are available from DoctorDashboardDto:
+            //   totalStudents and totalCourses (= activeCourses).
+            // "مهمة معلقة" stat removed — no backend field.
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.SpaceEvenly,
             ) {
-                HeaderStatItem(value = "$pendingTasks", label = "مهمة معلقة", color = AppTheme.color.secondary)
-                HeaderStatItem(value = "$totalStudents", label = "طالب", color = Color.White)
-                HeaderStatItem(value = "$activeCourses", label = "مقرر نشط", color = Color.White)
+                HeaderStatItem(value = "$totalStudents", label = "طالب")
+                HeaderStatItem(value = "$activeCourses", label = "مقرر نشط")
             }
         }
     }
 }
 
 @Composable
-private fun HeaderStatItem(value: String, label: String, color: Color) {
+private fun HeaderStatItem(value: String, label: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(value, color = color, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+        Text(value, color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
         Text(label, color = Color.White.copy(alpha = 0.75f), fontSize = 12.sp)
     }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Quick actions
+// Only actions that have a matching backend endpoint or navigation destination.
+// ─────────────────────────────────────────────────────────────────────────────
+
 @Composable
 private fun QuickActionsSection(
-    onAddCourse: () -> Unit,
     onGrading: () -> Unit,
+    onViewCourses: () -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -195,19 +238,21 @@ private fun QuickActionsSection(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            // "إدارة المقررات" — navigates to Courses (GET /api/courses available)
             QuickActionCard(
                 modifier = Modifier.weight(1f),
                 iconRes = R.drawable.ic_book,
-                label = "إضافة مقرر",
-                subLabel = "مقرر جديد",
+                label = "إدارة المقررات",
+                subLabel = "عرض المقررات",
                 isPrimary = true,
-                onClick = onAddCourse,
+                onClick = onViewCourses,
             )
+            // "التصحيح" — navigates to Assessment/Grading screen
             QuickActionCard(
                 modifier = Modifier.weight(1f),
                 iconRes = R.drawable.badge,
                 label = "التصحيح",
-                subLabel = "75 مهمة",
+                subLabel = "مراجعة الإجابات",
                 isPrimary = false,
                 onClick = onGrading,
             )
@@ -225,8 +270,7 @@ private fun QuickActionCard(
     onClick: () -> Unit,
 ) {
     Card(
-        modifier = modifier
-            .clickable(onClick = onClick),
+        modifier = modifier.clickable(onClick = onClick),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (isPrimary) AppTheme.color.primaryDark else Color.White,
@@ -272,6 +316,10 @@ private fun QuickActionCard(
     }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Section header
+// ─────────────────────────────────────────────────────────────────────────────
+
 @Composable
 private fun SectionHeader(title: String, onViewAll: () -> Unit) {
     Row(
@@ -291,6 +339,14 @@ private fun SectionHeader(title: String, onViewAll: () -> Unit) {
     }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Today session card
+// Fields sourced from ScheduleSessionDto:
+//   courseName, startTime, endTime, roomName, enrolled
+//
+// "ابدأ" action button REMOVED — no backend endpoint to start a lecture.
+// ─────────────────────────────────────────────────────────────────────────────
+
 @Composable
 private fun TodaySessionCard(session: ScheduleSessionDto) {
     Card(
@@ -305,52 +361,121 @@ private fun TodaySessionCard(session: ScheduleSessionDto) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(AppTheme.color.primaryDark),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_book),
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(20.dp),
-                    )
-                }
-                Column {
-                    Text(
-                        text = session.courseName ?: "",
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 14.sp,
-                        color = AppTheme.color.text,
-                    )
-                    Text(
-                        text = "${session.startTime} ص  •  ${session.roomName ?: ""}  •  ${session.enrolled ?: 0} طالب",
-                        fontSize = 12.sp,
-                        color = AppTheme.color.textSecondary,
-                    )
-                }
-            }
             Box(
                 modifier = Modifier
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(AppTheme.color.secondary)
-                    .padding(horizontal = 10.dp, vertical = 4.dp),
+                    .size(40.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(AppTheme.color.primaryDark),
+                contentAlignment = Alignment.Center,
             ) {
-                Text("ابدأ", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                Icon(
+                    painter = painterResource(R.drawable.ic_book),
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = session.courseName ?: "",
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 14.sp,
+                    color = AppTheme.color.text,
+                )
+                // Time range — both startTime and endTime are guaranteed non-null in ScheduleSessionDto
+                val timeRange = "${session.startTime} – ${session.endTime}"
+                val room = session.roomName?.let { " • $it" } ?: ""
+                val students = session.enrolled?.let { " • $it طالب" } ?: ""
+                Text(
+                    text = "$timeRange$room$students",
+                    fontSize = 12.sp,
+                    color = AppTheme.color.textSecondary,
+                )
             }
         }
     }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Upcoming exam card
+// Fields sourced from UpcomingExamDto: title, type, courseName, startAt
+// ─────────────────────────────────────────────────────────────────────────────
+
+@Composable
+private fun UpcomingExamCard(exam: noor.serry.rawaa.data.dto.UpcomingExamDto) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(AppTheme.color.secondary.copy(alpha = 0.15f)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.badge),
+                    contentDescription = null,
+                    tint = AppTheme.color.secondary,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = exam.title,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 14.sp,
+                    color = AppTheme.color.text,
+                )
+                val course = exam.courseName?.let { "$it • " } ?: ""
+                val date = exam.startAt ?: ""
+                Text(
+                    text = "$course$date",
+                    fontSize = 12.sp,
+                    color = AppTheme.color.textSecondary,
+                )
+            }
+            // Exam type badge
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(AppTheme.color.primary.copy(alpha = 0.1f))
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
+            ) {
+                Text(
+                    text = exam.type,
+                    color = AppTheme.color.primary,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Medium,
+                )
+            }
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Course card
+// Fields sourced from CourseDto: name, code, enrolledCount, maxStudents, isActive
+//
+// REMOVED from design:
+//   • "85% المعدل" — no average/grade field in CourseDto or DoctorDashboardDto
+//   • "12 واجب"    — no assignment count field in any available DTO
+// ─────────────────────────────────────────────────────────────────────────────
 
 @Composable
 private fun DashboardCourseCard(course: CourseDto, onManage: () -> Unit) {
@@ -371,6 +496,7 @@ private fun DashboardCourseCard(course: CourseDto, onManage: () -> Unit) {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                     verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f),
                 ) {
                     Box(
                         modifier = Modifier
@@ -394,6 +520,7 @@ private fun DashboardCourseCard(course: CourseDto, onManage: () -> Unit) {
                             color = AppTheme.color.text,
                         )
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            // enrolledCount: CourseDto field (nullable, defaults to null)
                             Text(
                                 text = "${course.enrolledCount ?: 0} طالب",
                                 fontSize = 12.sp,
@@ -401,11 +528,35 @@ private fun DashboardCourseCard(course: CourseDto, onManage: () -> Unit) {
                             )
                             Text("•", fontSize = 12.sp, color = AppTheme.color.textSecondary)
                             Text(
-                                text = "${course.code}",
+                                text = course.code,
                                 fontSize = 12.sp,
                                 color = AppTheme.color.textSecondary,
                             )
+                            // maxStudents is always present in CourseDto (defaults to 50)
+                            if (course.maxStudents > 0) {
+                                Text("•", fontSize = 12.sp, color = AppTheme.color.textSecondary)
+                                Text(
+                                    text = "الحد ${course.maxStudents}",
+                                    fontSize = 12.sp,
+                                    color = AppTheme.color.textSecondary,
+                                )
+                            }
                         }
+                    }
+                }
+                // Active/inactive badge — sourced from CourseDto.isActive (Int 0/1)
+                if (course.isActive == 0) {
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(Color(0xFFF5F5F5))
+                            .padding(horizontal = 8.dp, vertical = 3.dp),
+                    ) {
+                        Text(
+                            text = "غير نشط",
+                            fontSize = 11.sp,
+                            color = AppTheme.color.textSecondary,
+                        )
                     }
                 }
             }
@@ -423,53 +574,5 @@ private fun DashboardCourseCard(course: CourseDto, onManage: () -> Unit) {
                 Text("›", color = Color.White, fontSize = 16.sp)
             }
         }
-    }
-}
-
-@Composable
-private fun StudentPerformanceCard() {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = AppTheme.color.secondary),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_home),
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(20.dp),
-                )
-                Spacer(Modifier.width(8.dp))
-                Text(
-                    text = "أداء الطلاب",
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp,
-                )
-                Spacer(Modifier.weight(1f))
-                Text("هذا الأسبوع", color = Color.White.copy(0.75f), fontSize = 12.sp)
-            }
-            Spacer(Modifier.height(16.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceAround,
-            ) {
-                PerformanceStat(value = "85%", label = "معدل التسليم")
-                PerformanceStat(value = "92%", label = "معدل الحضور")
-            }
-        }
-    }
-}
-
-@Composable
-private fun PerformanceStat(value: String, label: String) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(value, color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
-        Text(label, color = Color.White.copy(0.8f), fontSize = 12.sp)
     }
 }

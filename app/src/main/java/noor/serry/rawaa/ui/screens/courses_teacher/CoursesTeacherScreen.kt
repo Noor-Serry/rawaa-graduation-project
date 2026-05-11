@@ -1,25 +1,32 @@
 package noor.serry.rawaa.ui.screens.courses_teacher
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush.Companion.verticalGradient
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import noor.serry.designsystem.components.Icon
+import noor.serry.designsystem.components.Text
+import noor.serry.designsystem.components.utils.clickAnimation
 import noor.serry.designsystem.design.AppTheme
 import noor.serry.rawaa.R
 import noor.serry.rawaa.data.dto.CourseDto
 import org.koin.androidx.compose.koinViewModel
+
+// ── Entry point ───────────────────────────────────────────────────────────────
 
 @Composable
 fun CoursesTeacherScreen(
@@ -27,141 +34,239 @@ fun CoursesTeacherScreen(
 ) {
     val state by viewModel.state.collectAsState()
 
+    if (state.isLoading) {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator(color = AppTheme.color.primary)
+        }
+        return
+    }
+
+    if (state.error != null) {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Text(
+                    text  = state.error ?: "",
+                    color = AppTheme.color.textSecondary,
+                    style = AppTheme.textStyle.body.medium,
+                )
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(AppTheme.color.primary)
+                        .clickAnimation { viewModel.loadCourses() }
+                        .padding(horizontal = 24.dp, vertical = 12.dp),
+                ) {
+                    Text(
+                        text  = "إعادة المحاولة",
+                        color = AppTheme.color.bg,
+                        style = AppTheme.textStyle.body.medium.copy(fontWeight = FontWeight.Bold),
+                    )
+                }
+            }
+        }
+        return
+    }
+
+    CoursesTeacherContent(
+        state     = state,
+        onTabSelected = viewModel::selectTab,
+        onViewDetails = viewModel::onCourseClicked,
+    )
+}
+
+// ── Root content ──────────────────────────────────────────────────────────────
+
+@Composable
+private fun CoursesTeacherContent(
+    state: CoursesTeacherUiState,
+    onTabSelected: (CourseTab) -> Unit,
+    onViewDetails: (Int) -> Unit,
+) {
     val displayedCourses = if (state.selectedTab == CourseTab.ACTIVE)
         state.activeCourses else state.archivedCourses
 
-    Column(
+    LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .background(AppTheme.color.bg),
+            .background(AppTheme.color.bgHover),
     ) {
-        // ── Header ────────────────────────────────────────────────────────────
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(AppTheme.color.primaryDark)
-                .padding(horizontal = 20.dp, vertical = 24.dp),
-        ) {
-            Column {
-                Text(
-                    text = "مقرراتي",
-                    color = Color.White,
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold,
-                )
-                Text(
-                    text = "إدارة وتتبع المقررات الدراسية",
-                    color = Color.White.copy(0.75f),
-                    fontSize = 13.sp,
-                )
-                Spacer(Modifier.height(20.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+
+        // 1 ── Hero header (gradient strip + stats)
+        item {
+            CoursesTeacherHero(state = state)
+        }
+
+        // 2 ── Tab selector
+        item {
+            CoursesTabRow(
+                state         = state,
+                onTabSelected = onTabSelected,
+                modifier      = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            )
+        }
+
+        // 3 ── Empty state
+        if (displayedCourses.isEmpty()) {
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 48.dp),
+                    contentAlignment = Alignment.Center,
                 ) {
-                    // total_students comes from DoctorDashboardDto
-                    StatCard(
-                        modifier = Modifier.weight(1f),
-                        value = "${state.totalStudents}",
-                        label = "طالب",
-                        valueColor = AppTheme.color.text,
-                    )
-                    // active course count is derivable locally
-                    StatCard(
-                        modifier = Modifier.weight(1f),
-                        value = "${state.activeCourses.size}",
-                        label = "مقرر نشط",
-                        valueColor = AppTheme.color.text,
+                    Text(
+                        text  = "لا توجد مقررات",
+                        color = AppTheme.color.textSecondary,
+                        style = AppTheme.textStyle.body.medium,
                     )
                 }
             }
         }
 
-        // ── Tabs ──────────────────────────────────────────────────────────────
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            CourseTabButton(
-                label = "المقررات النشطة (${state.activeCourses.size})",
-                isSelected = state.selectedTab == CourseTab.ACTIVE,
-                onClick = { viewModel.selectTab(CourseTab.ACTIVE) },
-                modifier = Modifier.weight(1f),
-            )
-            CourseTabButton(
-                label = "الأرشيف (${state.archivedCourses.size})",
-                isSelected = state.selectedTab == CourseTab.ARCHIVED,
-                onClick = { viewModel.selectTab(CourseTab.ARCHIVED) },
-                modifier = Modifier.weight(1f),
+        // 4 ── Course cards
+        items(displayedCourses) { course ->
+            CourseTeacherCard(
+                course        = course,
+                onViewDetails = { onViewDetails(course.id) },
+                modifier      = Modifier
+                    .padding(horizontal = 16.dp)
+                    .padding(bottom = 12.dp),
             )
         }
 
-        // ── Body ──────────────────────────────────────────────────────────────
-        when {
-            state.isLoading -> {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = AppTheme.color.primary)
-                }
+        item { Spacer(Modifier.height(32.dp)) }
+    }
+}
+
+// ── Hero ──────────────────────────────────────────────────────────────────────
+
+@Composable
+private fun CoursesTeacherHero(
+    state: CoursesTeacherUiState,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(
+                verticalGradient(listOf(AppTheme.color.primary, AppTheme.color.primaryLight))
+            )
+            .padding(horizontal = 24.dp, vertical = 28.dp),
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            // Title block
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    text  = "مقرراتي",
+                    color = AppTheme.color.bg,
+                    style = AppTheme.textStyle.headline.small,
+                )
+                Text(
+                    text  = "إدارة وتتبع المقررات الدراسية",
+                    color = AppTheme.color.bg.copy(alpha = .75f),
+                    style = AppTheme.textStyle.body.small.copy(fontWeight = FontWeight.Normal),
+                )
             }
-            state.error != null -> {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(
-                        text = state.error ?: "حدث خطأ",
-                        color = AppTheme.color.textSecondary,
-                        fontSize = 14.sp,
-                    )
-                }
-            }
-            displayedCourses.isEmpty() -> {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(
-                        text = "لا توجد مقررات",
-                        color = AppTheme.color.textSecondary,
-                        fontSize = 14.sp,
-                    )
-                }
-            }
-            else -> {
-                LazyColumn(
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    items(displayedCourses) { course ->
-                        CourseTeacherCard(
-                            course = course,
-                            onViewDetails = { viewModel.onCourseClicked(course.id) },
-                        )
-                    }
-                }
+
+            // Stats row — reuses the same StatChip pattern as the profile screen
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                modifier              = Modifier.fillMaxWidth(),
+            ) {
+                HeroStatCard(
+                    value    = "${state.totalStudents}",
+                    label    = "إجمالي الطلاب",
+                    iconRes  = R.drawable.ic_person,
+                    modifier = Modifier.weight(1f),
+                )
+                HeroStatCard(
+                    value    = "${state.activeCourses.size}",
+                    label    = "مقررات نشطة",
+                    iconRes  = R.drawable.ic_book,
+                    modifier = Modifier.weight(1f),
+                )
+                HeroStatCard(
+                    value    = "${state.archivedCourses.size}",
+                    label    = "مؤرشفة",
+                    iconRes  = R.drawable.ic_calendar,
+                    modifier = Modifier.weight(1f),
+                )
             }
         }
     }
 }
 
-// ── Sub-components ────────────────────────────────────────────────────────────
-
 @Composable
-private fun StatCard(
-    modifier: Modifier,
+private fun HeroStatCard(
     value: String,
     label: String,
-    valueColor: Color,
+    iconRes: Int,
+    modifier: Modifier = Modifier,
 ) {
-    Card(
-        modifier = modifier,
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(14.dp))
+            .background(AppTheme.color.bg)
+            .padding(vertical = 12.dp, horizontal = 6.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        Column(
-            modifier = Modifier.padding(12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
+        Box(
+            modifier = Modifier
+                .size(34.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .background(AppTheme.color.primary.copy(alpha = .10f)),
+            contentAlignment = Alignment.Center,
         ) {
-            Text(value, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = valueColor)
-            Text(label, fontSize = 11.sp, color = AppTheme.color.textSecondary)
+            Icon(
+                painter  = painterResource(iconRes),
+                tint     = AppTheme.color.primary,
+                modifier = Modifier.size(17.dp),
+            )
         }
+        Text(
+            text      = value,
+            color     = AppTheme.color.text,
+            style     = AppTheme.textStyle.body.medium.copy(fontWeight = FontWeight.ExtraBold),
+            textAlign = TextAlign.Center,
+        )
+        Text(
+            text      = label,
+            color     = AppTheme.color.textSecondary,
+            style     = AppTheme.textStyle.label.small.copy(fontSize = 10.sp),
+            textAlign = TextAlign.Center,
+            minLines  = 2,
+        )
+    }
+}
+
+// ── Tab selector ──────────────────────────────────────────────────────────────
+
+@Composable
+private fun CoursesTabRow(
+    state: CoursesTeacherUiState,
+    onTabSelected: (CourseTab) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier              = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        CourseTabButton(
+            label      = "المقررات النشطة (${state.activeCourses.size})",
+            isSelected = state.selectedTab == CourseTab.ACTIVE,
+            onClick    = { onTabSelected(CourseTab.ACTIVE) },
+            modifier   = Modifier.weight(1f),
+        )
+        CourseTabButton(
+            label      = "الأرشيف (${state.archivedCourses.size})",
+            isSelected = state.selectedTab == CourseTab.ARCHIVED,
+            onClick    = { onTabSelected(CourseTab.ARCHIVED) },
+            modifier   = Modifier.weight(1f),
+        )
     }
 }
 
@@ -170,157 +275,220 @@ private fun CourseTabButton(
     label: String,
     isSelected: Boolean,
     onClick: () -> Unit,
-    modifier: Modifier,
+    modifier: Modifier = Modifier,
 ) {
+    val bgColor    = if (isSelected) AppTheme.color.primary else AppTheme.color.bg
+    val textColor  = if (isSelected) AppTheme.color.bg else AppTheme.color.textSecondary
+    val borderColor = if (isSelected) AppTheme.color.primary else AppTheme.color.border.copy(alpha = .7f)
+
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(10.dp))
-            .background(if (isSelected) AppTheme.color.primaryDark else Color.White)
-            .clickable(onClick = onClick)
-            .padding(vertical = 10.dp),
+            .clip(RoundedCornerShape(12.dp))
+            .background(bgColor)
+            .border(1.dp, borderColor, RoundedCornerShape(12.dp))
+            .clickAnimation { onClick() }
+            .padding(vertical = 11.dp),
         contentAlignment = Alignment.Center,
     ) {
         Text(
-            text = label,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Medium,
-            color = if (isSelected) Color.White else AppTheme.color.textSecondary,
+            text  = label,
+            color = textColor,
+            style = AppTheme.textStyle.body.small.copy(fontWeight = FontWeight.SemiBold),
         )
     }
 }
 
-/**
- * Card that renders only fields present in [CourseDto] returned by
- * GET /api/doctor/dashboard → courses[].
- *
- * Removed UI that had no backend backing:
- *   • "قيد التصحيح" stat (no pending-grading count in API)
- *   • Average-grade badge "85%" (not in CourseDto)
- *   • "معلق" / pending badge (not in CourseDto)
- *   • "واجب" badge (no assignments endpoint)
- *   • Quick-link chips: "المحاضرات", "الواجبات" (no matching endpoints)
- *   • Hardcoded semester string "الفصل الأول 2026"
- */
+// ── Course card ───────────────────────────────────────────────────────────────
+
 @Composable
-fun CourseTeacherCard(course: CourseDto, onViewDetails: () -> Unit) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+fun CourseTeacherCard(
+    course: CourseDto,
+    onViewDetails: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(AppTheme.color.bg)
+            .border(1.dp, AppTheme.color.border.copy(alpha = .7f), RoundedCornerShape(16.dp))
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-
-            // ── Title row ────────────────────────────────────────────────────
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top,
+        // ── Title row ──────────────────────────────────────────────────────────
+        Row(
+            modifier              = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment     = Alignment.Top,
+        ) {
+            // Icon box — same style as SectionCard in profile
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(AppTheme.color.primary.copy(alpha = .10f)),
+                contentAlignment = Alignment.Center,
             ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = course.code,
-                        fontSize = 12.sp,
-                        color = AppTheme.color.textSecondary,
-                    )
-                    Text(
-                        text = course.name,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 15.sp,
-                        color = AppTheme.color.text,
-                    )
-                    // semester & academic_year are nullable — only show when present
-                    val semesterLabel = buildSemesterLabel(course.semester, course.academicYear)
-                    if (semesterLabel != null) {
-                        Text(
-                            text = semesterLabel,
-                            fontSize = 12.sp,
-                            color = AppTheme.color.textSecondary,
-                        )
-                    }
-                }
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(AppTheme.color.primaryDark.copy(0.1f)),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_book),
-                        contentDescription = null,
-                        tint = AppTheme.color.primaryDark,
-                        modifier = Modifier.size(22.dp),
-                    )
-                }
+                Icon(
+                    painter  = painterResource(R.drawable.ic_book),
+                    tint     = AppTheme.color.primary,
+                    modifier = Modifier.size(20.dp),
+                )
             }
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.width(10.dp))
 
-            // ── Info badges – only real server fields ─────────────────────────
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                // enrolled_count (nullable) — students registered in this course
-                InfoBadge(
-                    value = "${course.enrolledCount ?: 0}",
-                    label = "طالب",
-                )
-                // credit_hours – always present (default 3)
-                InfoBadge(
-                    value = "${course.creditHours}",
-                    label = "ساعات",
-                )
-                // max_students – capacity
-                InfoBadge(
-                    value = "${course.maxStudents}",
-                    label = "الحد الأقصى",
-                )
-                // department_name if returned
-                if (course.departmentName != null) {
-                    InfoBadge(
-                        value = course.departmentName,
-                        label = "القسم",
-                    )
-                }
-            }
-
-            Spacer(Modifier.height(12.dp))
-
-            // ── "عرض التفاصيل" button — navigates to course detail ───────────
-            // Backed by GET /api/courses/{id}/students which the repository exposes.
-            OutlinedButton(
-                onClick = onViewDetails,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(10.dp),
-                border = ButtonDefaults.outlinedButtonBorder,
+            Column(
+                modifier            = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(3.dp),
             ) {
                 Text(
-                    text = "عرض التفاصيل",
-                    fontSize = 13.sp,
-                    color = AppTheme.color.primaryDark,
+                    text  = course.code,
+                    color = AppTheme.color.textSecondary,
+                    style = AppTheme.textStyle.label.small,
                 )
+                Text(
+                    text  = course.name,
+                    color = AppTheme.color.text,
+                    style = AppTheme.textStyle.body.medium.copy(fontWeight = FontWeight.Bold),
+                )
+                val semesterLabel = buildSemesterLabel(course.semester, course.academicYear)
+                if (semesterLabel != null) {
+                    Text(
+                        text  = semesterLabel,
+                        color = AppTheme.color.textSecondary,
+                        style = AppTheme.textStyle.label.small,
+                    )
+                }
             }
+
+            // Department badge — same pill style as profile's roleTitle badge
+            if (course.departmentName != null) {
+                Box(
+                    modifier = Modifier
+                        .background(
+                            AppTheme.color.primary.copy(alpha = .08f),
+                            RoundedCornerShape(20.dp),
+                        )
+                        .padding(horizontal = 10.dp, vertical = 4.dp),
+                ) {
+                    Text(
+                        text  = course.departmentName,
+                        color = AppTheme.color.primary,
+                        style = AppTheme.textStyle.label.small.copy(fontWeight = FontWeight.Medium),
+                    )
+                }
+            }
+        }
+
+        // ── Divider ────────────────────────────────────────────────────────────
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(AppTheme.color.bgHover),
+        )
+
+        // ── Info badges row ────────────────────────────────────────────────────
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier              = Modifier.fillMaxWidth(),
+        ) {
+            CourseInfoBadge(
+                value    = "${course.enrolledCount ?: 0}",
+                label    = "طالب",
+                iconRes  = R.drawable.ic_person,
+                iconTint = Color(0xFF3B82F6),
+                iconBg   = Color(0xFFDBEAFE),
+                modifier = Modifier.weight(1f),
+            )
+            CourseInfoBadge(
+                value    = "${course.creditHours}",
+                label    = "ساعة",
+                iconRes  = R.drawable.ic_calendar,
+                iconTint = Color(0xFFF59E0B),
+                iconBg   = Color(0xFFFEF9C3),
+                modifier = Modifier.weight(1f),
+            )
+            CourseInfoBadge(
+                value    = "${course.maxStudents}",
+                label    = "الحد الأقصى",
+                iconRes  = R.drawable.ic_person,
+                iconTint = Color(0xFF16A34A),
+                iconBg   = Color(0xFFDCFCE7),
+                modifier = Modifier.weight(1f),
+            )
+        }
+
+        // ── CTA button — same outlined style as profile retry ─────────────────
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(10.dp))
+                .border(1.dp, AppTheme.color.primary.copy(alpha = .50f), RoundedCornerShape(10.dp))
+                .clickAnimation { onViewDetails() }
+                .padding(vertical = 11.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text  = "عرض التفاصيل",
+                color = AppTheme.color.primary,
+                style = AppTheme.textStyle.body.small.copy(fontWeight = FontWeight.SemiBold),
+            )
         }
     }
 }
 
+// ── Info badge ─────────────────────────────────────────────────────────────────
+
 @Composable
-private fun InfoBadge(value: String, label: String) {
+private fun CourseInfoBadge(
+    value: String,
+    label: String,
+    iconRes: Int,
+    iconTint: Color,
+    iconBg: Color,
+    modifier: Modifier = Modifier,
+) {
     Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(10.dp))
+            .background(AppTheme.color.bgHover)
+            .border(1.dp, AppTheme.color.border.copy(alpha = .5f), RoundedCornerShape(10.dp))
+            .padding(vertical = 10.dp, horizontal = 6.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
-            .clip(RoundedCornerShape(8.dp))
-            .background(AppTheme.color.bg)
-            .padding(horizontal = 8.dp, vertical = 4.dp),
+        verticalArrangement = Arrangement.spacedBy(5.dp),
     ) {
-        Text(value, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = AppTheme.color.text)
-        Text(label, fontSize = 10.sp, color = AppTheme.color.textSecondary)
+        Box(
+            modifier = Modifier
+                .size(28.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(iconBg),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                painter  = painterResource(iconRes),
+                tint     = iconTint,
+                modifier = Modifier.size(14.dp),
+            )
+        }
+        Text(
+            text      = value,
+            color     = AppTheme.color.text,
+            style     = AppTheme.textStyle.body.small.copy(fontWeight = FontWeight.ExtraBold),
+            textAlign = TextAlign.Center,
+        )
+        Text(
+            text      = label,
+            color     = AppTheme.color.textSecondary,
+            style     = AppTheme.textStyle.label.small.copy(fontSize = 10.sp),
+            textAlign = TextAlign.Center,
+        )
     }
 }
 
-/** Returns e.g. "الفصل الثاني 2025" or null if both fields are absent. */
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
 private fun buildSemesterLabel(semester: String?, academicYear: Int?): String? {
     if (semester == null && academicYear == null) return null
     return listOfNotNull(semester, academicYear?.toString()).joinToString(" ")

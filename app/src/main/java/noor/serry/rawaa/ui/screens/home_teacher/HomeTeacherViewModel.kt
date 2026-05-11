@@ -31,8 +31,11 @@ class HomeTeacherViewModel(
                     state.copy(
                         isLoading = false,
                         doctorName = user?.name ?: "",
+                        // DoctorDashboardDto.totalCourses / totalStudents are the only
+                        // aggregate counts the backend returns for the doctor dashboard.
                         totalCourses = data?.totalCourses ?: 0,
                         totalStudents = data?.totalStudents ?: 0,
+                        // pendingGrading is NOT mapped — DoctorDashboardDto has no such field.
                         courses = data?.courses ?: emptyList(),
                         todaySchedule = data?.schedule ?: emptyList(),
                         upcomingExams = data?.upcomingExams ?: emptyList(),
