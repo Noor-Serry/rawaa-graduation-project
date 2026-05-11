@@ -2,12 +2,14 @@ package noor.serry.rawaa.ui.navigation.student
 
 import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -25,51 +27,72 @@ import noor.serry.designsystem.design.AppTheme
 import noor.serry.rawaa.ui.screens.home_student.components.HomeNavTab
 import noor.serry.rawaa.ui.screens.home_student.components.HomeStudentBottomNav
 import noor.serry.rawaa.ui.screens.studentScreens.menu.MenuScreen
+import noor.serry.rawaa.ui.screens.studentScreens.menu.MenuViewModel
+import noor.serry.rawaa.ui.screens.studentScreens.menu.components.StudentHeader
+import org.koin.androidx.compose.koinViewModel
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun StudentEntryPoint() {
-    val backStack = rememberNavBackStack(StudentRouteKeys.Home)
+    val backStack   = rememberNavBackStack(StudentRouteKeys.Home)
     var selectedTab by remember { mutableStateOf(HomeNavTab.HOME) }
+
+    // ONE ViewModel instance — shared by the header, the scrim, and the drawer panel.
+    val menuViewModel: MenuViewModel = koinViewModel()
+    val menuState by menuViewModel.uiState.collectAsState()
 
     CompositionLocalProvider(
         StudentBackStackProvider provides backStack
     ) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            MenuScreen()
-            SnackBarHost(Modifier
-                .zIndex(100f)
-                .padding(top = 32.dp, start = 16.dp, end = 16.dp))
-            Scaffold(
-                bottomBar = {
-                    HomeStudentBottomNav(
-                        selectedTab = selectedTab,
-                        onTabSelected = { tab ->
-                            if (backStack.last() != tab.route) {
-                                selectedTab = tab.tab
-                                backStack.add(tab.route)
-                            }
-                        },
+        Column(modifier = Modifier.fillMaxSize()) {
+
+            // ── Top bar — always visible ───────────────────────────────────
+            StudentHeader(
+                state               = menuState,
+                interactionListener = menuViewModel
+            )
+
+            // ── Content area ───────────────────────────────────────────────
+            Box(modifier = Modifier.weight(1f)) {
+
+                Scaffold(
+                    bottomBar = {
+                        HomeStudentBottomNav(
+                            selectedTab   = selectedTab,
+                            onTabSelected = { tab ->
+                                if (backStack.last() != tab.route) {
+                                    selectedTab = tab.tab
+                                    backStack.add(tab.route)
+                                }
+                            },
+                        )
+                    },
+                    containerColor = AppTheme.color.bg,
+                ) { innerPadding ->
+                    NavDisplay(
+                        modifier      = Modifier
+                            .padding(bottom = innerPadding.calculateBottomPadding()),
+                        backStack     = backStack,
+                        onBack        = { backStack.removeLastOrNull() },
+                        entryProvider = studentEntryProvider,
                     )
-                },
-                containerColor = AppTheme.color.bg
-            ) {
+                }
 
+                // Drawer overlay — sits on top of Scaffold, same Box
+                MenuScreen(
+                    state               = menuState,
+                    interactionListener = menuViewModel,
+                )
 
-                NavDisplay(
-                    modifier = Modifier
-                        .padding(top = 64.dp, bottom = it.calculateBottomPadding())
-                        .statusBarsPadding(),
-                    backStack = backStack,
-                    onBack = { backStack.removeLastOrNull() },
-                    entryProvider = studentEntryProvider
+                SnackBarHost(
+                    Modifier
+                        .zIndex(100f)
+                        .padding(top = 8.dp, start = 16.dp, end = 16.dp)
                 )
             }
-
         }
     }
 }
 
-
 val StudentBackStackProvider =
-    staticCompositionLocalOf<NavBackStack<NavKey>> { error("student back stack dose not provided") }
+    staticCompositionLocalOf<NavBackStack<NavKey>> { error("student back stack not provided") }

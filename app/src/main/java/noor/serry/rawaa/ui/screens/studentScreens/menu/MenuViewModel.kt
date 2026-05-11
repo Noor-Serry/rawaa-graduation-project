@@ -22,11 +22,6 @@ class MenuViewModel(
 
     init { loadUser() }
 
-    /**
-     * Loads the logged-in user's name and role from the server (GET /api/auth/me).
-     * Previously MenuUiState.userName / userRole / userInitial were never populated
-     * from the server — they stayed empty. Now they are filled from UserDto.
-     */
     private fun loadUser() {
         viewModelScope.launch(dispatchers.IO) {
             try {
@@ -61,10 +56,10 @@ class MenuViewModel(
         }
     }
 
-    override fun onMenuToggle() = _uiState.update { it.copy(isOpen = !it.isOpen) }
+    override fun onMenuToggle()   = _uiState.update { it.copy(isOpen = !it.isOpen) }
+    override fun onMenuDismiss()  = _uiState.update { it.copy(isOpen = false) }
 
-    // Static menu items — these navigate to in-app screens, not server data
-    override fun onSettingsClick()      = Unit  // TODO: navigate to settings
-    override fun onHelpAndSupportClick()= Unit  // TODO: navigate to help
-    override fun onPrivacyPolicyClick() = Unit  // TODO: navigate to privacy policy
+    override fun onSettingsClick()       = Unit  // TODO: navigate to settings
+    override fun onHelpAndSupportClick() = Unit  // TODO: navigate to help
+    override fun onPrivacyPolicyClick()  = Unit  // TODO: navigate to privacy policy
 }

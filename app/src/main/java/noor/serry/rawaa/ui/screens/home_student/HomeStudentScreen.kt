@@ -18,6 +18,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import org.koin.compose.viewmodel.koinViewModel
 import noor.serry.designsystem.design.AppTheme
+import noor.serry.rawaa.BackStackProvider
+import noor.serry.rawaa.ui.navigation.student.StudentBackStackProvider
+import noor.serry.rawaa.ui.navigation.student.StudentRouteKeys
 import noor.serry.rawaa.ui.screens.home_student.components.CourseProgressSection
 import noor.serry.rawaa.ui.screens.home_student.components.HomeHeaderSection
 import noor.serry.rawaa.ui.screens.home_student.components.TodayScheduleSection
@@ -25,16 +28,12 @@ import noor.serry.rawaa.ui.screens.home_student.components.UpcomingExamsSection
 
 @Composable
 fun HomeStudentScreen(
-    onNavigateToCourses: () -> Unit = {},
-    onNavigateToSchedule: () -> Unit = {},
     viewModel: HomeStudentViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
 
     HandleEffects(
-        effects = viewModel.effect,
-        onNavigateToCourses  = onNavigateToCourses,
-        onNavigateToSchedule = onNavigateToSchedule,
+        effects = viewModel.effect
     )
 
     HomeStudentContent(state = state, interactionListener = viewModel)
@@ -97,16 +96,16 @@ private fun HomeStudentContent(
 @Composable
 private fun HandleEffects(
     effects: Flow<HomeStudentEffect>,
-    onNavigateToCourses: () -> Unit,
-    onNavigateToSchedule: () -> Unit,
 ) {
+    val navigationBackStack = StudentBackStackProvider.current
+
     LaunchedEffect(Unit) {
         effects.collectLatest { effect ->
             when (effect) {
                 HomeStudentEffect.NavigateToAllCourses,
-                HomeStudentEffect.NavigateToMyCourses   -> onNavigateToCourses()
+                HomeStudentEffect.NavigateToMyCourses   -> navigationBackStack.add(StudentRouteKeys.Courses)
                 HomeStudentEffect.NavigateToAllSchedule,
-                HomeStudentEffect.NavigateToSchedule    -> onNavigateToSchedule()
+                HomeStudentEffect.NavigateToSchedule    -> navigationBackStack.add(StudentRouteKeys.Schedule)
                 // Removed: NavigateToGrades — no grades screen in StudentRouteKeys
             }
         }

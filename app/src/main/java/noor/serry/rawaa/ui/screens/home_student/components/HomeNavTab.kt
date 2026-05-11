@@ -38,7 +38,7 @@ fun HomeStudentBottomNav(
         BottomNavItem(HomeNavTab.HOME,          R.drawable.ic_home,          R.string.nav_home, StudentRouteKeys.Home),
         BottomNavItem(HomeNavTab.COURSES,       R.drawable.ic_book,          R.string.nav_courses, StudentRouteKeys.Courses),
         BottomNavItem(HomeNavTab.SCHEDULE,      R.drawable.ic_calendar,      R.string.nav_schedule, StudentRouteKeys.Schedule),
-        BottomNavItem(HomeNavTab.NOTIFICATIONS, R.drawable.ic_bell,          R.string.nav_notifications, StudentRouteKeys.Notifications),
+        BottomNavItem(HomeNavTab.NOTIFICATIONS, R.drawable.bell,          R.string.nav_notifications, StudentRouteKeys.Notifications),
         BottomNavItem(HomeNavTab.PROFILE,       R.drawable.person,       R.string.nav_profile, StudentRouteKeys.Profile),
     )
 

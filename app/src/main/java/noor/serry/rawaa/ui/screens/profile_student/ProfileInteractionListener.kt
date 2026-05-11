@@ -1,9 +1,12 @@
 package noor.serry.rawaa.ui.screens.profile_student
 
 interface ProfileInteractionListener {
-    fun onEditProfileClick()
-    fun onChangeAvatarClick()
-    fun onEditFieldClick(field: ProfileField)
-    // Removed: onAchievementsClick — no achievements endpoint on server
-    // Removed: onCertificatesClick — no certificates endpoint on server
+    fun onEditProfileClick()        // enter edit mode
+    fun onCancelEditClick()         // exit edit mode without saving
+    fun onSaveProfileClick()        // PUT /api/auth/profile + PUT /api/students/{id}
+    fun onChangeAvatarClick()       // open image picker
+
+    fun onNameChanged(value: String)
+    fun onPhoneChanged(value: String)
+    fun onEmailChanged(value: String)
 }

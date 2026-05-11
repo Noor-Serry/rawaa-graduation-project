@@ -40,7 +40,6 @@ class HomeStudentViewModel(
     override fun onViewAllCourses()  = sendNewEffect(HomeStudentEffect.NavigateToAllCourses)
     override fun onMyCoursesClick()  = sendNewEffect(HomeStudentEffect.NavigateToMyCourses)
     override fun onScheduleClick()   = sendNewEffect(HomeStudentEffect.NavigateToSchedule)
-    // Removed: onGradesClick — no grades screen in StudentRouteKeys, no matching server action
 }
 
 // ── Mappers ──────────────────────────────────────────────────────────────────

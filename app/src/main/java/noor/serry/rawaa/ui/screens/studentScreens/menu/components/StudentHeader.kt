@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -41,7 +42,7 @@ fun StudentHeader(
             .zIndex(10f)
             .height(64.dp)
             .background(AppTheme.color.bg)
-            .padding(horizontal = 16.dp),
+            .padding(horizontal = 16.dp).statusBarsPadding(),
 
         verticalAlignment = Alignment.CenterVertically
     ) {
