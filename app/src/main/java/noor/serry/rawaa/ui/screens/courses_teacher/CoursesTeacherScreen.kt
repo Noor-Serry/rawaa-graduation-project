@@ -35,7 +35,7 @@ fun CoursesTeacherScreen(
             .fillMaxSize()
             .background(AppTheme.color.bg),
     ) {
-        // Header
+        // ── Header ────────────────────────────────────────────────────────────
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -59,18 +59,14 @@ fun CoursesTeacherScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    StatCard(
-                        modifier = Modifier.weight(1f),
-                        value = "127",
-                        label = "قيد التصحيح",
-                        valueColor = AppTheme.color.secondary,
-                    )
+                    // total_students comes from DoctorDashboardDto
                     StatCard(
                         modifier = Modifier.weight(1f),
                         value = "${state.totalStudents}",
                         label = "طالب",
                         valueColor = AppTheme.color.text,
                     )
+                    // active course count is derivable locally
                     StatCard(
                         modifier = Modifier.weight(1f),
                         value = "${state.activeCourses.size}",
@@ -81,30 +77,11 @@ fun CoursesTeacherScreen(
             }
         }
 
-        // Add course button
-        Button(
-            onClick = { /* navigate to add course */ },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            shape = RoundedCornerShape(12.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = AppTheme.color.primaryDark),
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.ic_home),
-                contentDescription = null,
-                tint = Color.White,
-                modifier = Modifier.size(18.dp),
-            )
-            Spacer(Modifier.width(8.dp))
-            Text("إضافة مقرر جديد", color = Color.White, fontSize = 14.sp)
-        }
-
-        // Tabs
+        // ── Tabs ──────────────────────────────────────────────────────────────
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp),
+                .padding(horizontal = 16.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             CourseTabButton(
@@ -121,27 +98,49 @@ fun CoursesTeacherScreen(
             )
         }
 
-        Spacer(Modifier.height(8.dp))
-
-        if (state.isLoading) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = AppTheme.color.primary)
+        // ── Body ──────────────────────────────────────────────────────────────
+        when {
+            state.isLoading -> {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(color = AppTheme.color.primary)
+                }
             }
-        } else {
-            LazyColumn(
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                items(displayedCourses) { course ->
-                    CourseTeacherCard(
-                        course = course,
-                        onManage = { viewModel.onCourseClicked(course.id) },
+            state.error != null -> {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text(
+                        text = state.error ?: "حدث خطأ",
+                        color = AppTheme.color.textSecondary,
+                        fontSize = 14.sp,
                     )
+                }
+            }
+            displayedCourses.isEmpty() -> {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text(
+                        text = "لا توجد مقررات",
+                        color = AppTheme.color.textSecondary,
+                        fontSize = 14.sp,
+                    )
+                }
+            }
+            else -> {
+                LazyColumn(
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    items(displayedCourses) { course ->
+                        CourseTeacherCard(
+                            course = course,
+                            onViewDetails = { viewModel.onCourseClicked(course.id) },
+                        )
+                    }
                 }
             }
         }
     }
 }
+
+// ── Sub-components ────────────────────────────────────────────────────────────
 
 @Composable
 private fun StatCard(
@@ -190,8 +189,20 @@ private fun CourseTabButton(
     }
 }
 
+/**
+ * Card that renders only fields present in [CourseDto] returned by
+ * GET /api/doctor/dashboard → courses[].
+ *
+ * Removed UI that had no backend backing:
+ *   • "قيد التصحيح" stat (no pending-grading count in API)
+ *   • Average-grade badge "85%" (not in CourseDto)
+ *   • "معلق" / pending badge (not in CourseDto)
+ *   • "واجب" badge (no assignments endpoint)
+ *   • Quick-link chips: "المحاضرات", "الواجبات" (no matching endpoints)
+ *   • Hardcoded semester string "الفصل الأول 2026"
+ */
 @Composable
-fun CourseTeacherCard(course: CourseDto, onManage: () -> Unit) {
+fun CourseTeacherCard(course: CourseDto, onViewDetails: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(14.dp),
@@ -199,6 +210,8 @@ fun CourseTeacherCard(course: CourseDto, onManage: () -> Unit) {
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
+
+            // ── Title row ────────────────────────────────────────────────────
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -216,11 +229,15 @@ fun CourseTeacherCard(course: CourseDto, onManage: () -> Unit) {
                         fontSize = 15.sp,
                         color = AppTheme.color.text,
                     )
-                    Text(
-                        text = "الفصل الأول 2026",
-                        fontSize = 12.sp,
-                        color = AppTheme.color.textSecondary,
-                    )
+                    // semester & academic_year are nullable — only show when present
+                    val semesterLabel = buildSemesterLabel(course.semester, course.academicYear)
+                    if (semesterLabel != null) {
+                        Text(
+                            text = semesterLabel,
+                            fontSize = 12.sp,
+                            color = AppTheme.color.textSecondary,
+                        )
+                    }
                 }
                 Box(
                     modifier = Modifier
@@ -240,99 +257,71 @@ fun CourseTeacherCard(course: CourseDto, onManage: () -> Unit) {
 
             Spacer(Modifier.height(12.dp))
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                // Average grade badge
-                StatBadge(
-                    value = "85%",
-                    label = "معدل",
-                    bgColor = Color(0xFFE8F5E9),
-                    textColor = Color(0xFF2E7D32),
-                )
-                // Pending badge
-                StatBadge(
-                    value = "45",
-                    label = "معلق",
-                    bgColor = Color(0xFFFFF8E1),
-                    textColor = AppTheme.color.secondary,
-                )
-                // Assignments
-                StatBadge(
-                    value = "${course.enrolledCount ?: 0}",
-                    label = "واجب",
-                    bgColor = AppTheme.color.bg,
-                    textColor = AppTheme.color.text,
-                )
-                // Students
-                StatBadge(
-                    value = "${course.enrolledCount ?: 0}",
-                    label = "طالب",
-                    bgColor = AppTheme.color.bg,
-                    textColor = AppTheme.color.text,
-                )
-            }
-
-            Spacer(Modifier.height(12.dp))
-
-            // Quick links row
+            // ── Info badges – only real server fields ─────────────────────────
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                QuickLinkChip(iconRes = R.drawable.ic_book, label = "المحاضرات", modifier = Modifier.weight(1f))
-                QuickLinkChip(iconRes = R.drawable.ic_book, label = "الواجبات", modifier = Modifier.weight(1f))
-                QuickLinkChip(iconRes = R.drawable.ic_person, label = "الطلاب", modifier = Modifier.weight(1f))
+                // enrolled_count (nullable) — students registered in this course
+                InfoBadge(
+                    value = "${course.enrolledCount ?: 0}",
+                    label = "طالب",
+                )
+                // credit_hours – always present (default 3)
+                InfoBadge(
+                    value = "${course.creditHours}",
+                    label = "ساعات",
+                )
+                // max_students – capacity
+                InfoBadge(
+                    value = "${course.maxStudents}",
+                    label = "الحد الأقصى",
+                )
+                // department_name if returned
+                if (course.departmentName != null) {
+                    InfoBadge(
+                        value = course.departmentName,
+                        label = "القسم",
+                    )
+                }
             }
 
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(12.dp))
 
-            Button(
-                onClick = onManage,
+            // ── "عرض التفاصيل" button — navigates to course detail ───────────
+            // Backed by GET /api/courses/{id}/students which the repository exposes.
+            OutlinedButton(
+                onClick = onViewDetails,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(10.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = AppTheme.color.primaryDark),
+                border = ButtonDefaults.outlinedButtonBorder,
             ) {
-                Text("إدارة المقرر", color = Color.White, fontSize = 13.sp)
-                Spacer(Modifier.width(4.dp))
-                Text("›", color = Color.White, fontSize = 16.sp)
+                Text(
+                    text = "عرض التفاصيل",
+                    fontSize = 13.sp,
+                    color = AppTheme.color.primaryDark,
+                )
             }
         }
     }
 }
 
 @Composable
-private fun StatBadge(value: String, label: String, bgColor: Color, textColor: Color) {
+private fun InfoBadge(value: String, label: String) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .clip(RoundedCornerShape(8.dp))
-            .background(bgColor)
+            .background(AppTheme.color.bg)
             .padding(horizontal = 8.dp, vertical = 4.dp),
     ) {
-        Text(value, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = textColor)
-        Text(label, fontSize = 10.sp, color = textColor.copy(0.7f))
+        Text(value, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = AppTheme.color.text)
+        Text(label, fontSize = 10.sp, color = AppTheme.color.textSecondary)
     }
 }
 
-@Composable
-private fun QuickLinkChip(iconRes: Int, label: String, modifier: Modifier) {
-    Row(
-        modifier = modifier
-            .clip(RoundedCornerShape(8.dp))
-            .background(AppTheme.color.bg)
-            .padding(vertical = 6.dp, horizontal = 4.dp),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Icon(
-            painter = painterResource(iconRes),
-            contentDescription = null,
-            tint = AppTheme.color.textSecondary,
-            modifier = Modifier.size(14.dp),
-        )
-        Spacer(Modifier.width(4.dp))
-        Text(label, fontSize = 11.sp, color = AppTheme.color.textSecondary)
-    }
+/** Returns e.g. "الفصل الثاني 2025" or null if both fields are absent. */
+private fun buildSemesterLabel(semester: String?, academicYear: Int?): String? {
+    if (semester == null && academicYear == null) return null
+    return listOfNotNull(semester, academicYear?.toString()).joinToString(" ")
 }

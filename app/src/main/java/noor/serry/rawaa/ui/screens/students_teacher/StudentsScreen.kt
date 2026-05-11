@@ -1,4 +1,4 @@
-package noor.serry.rawaa.ui.screens.students
+package noor.serry.rawaa.ui.screens.students_teacher
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border

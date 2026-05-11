@@ -1,4 +1,4 @@
-package noor.serry.rawaa.ui.screens.students
+package noor.serry.rawaa.ui.screens.students_teacher
 
 interface StudentsInteractionListener {
     fun onSearchChange(query: String)

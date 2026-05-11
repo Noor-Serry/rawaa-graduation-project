@@ -1,4 +1,4 @@
-package noor.serry.rawaa.ui.screens.students
+package noor.serry.rawaa.ui.screens.students_teacher
 
 import noor.serry.rawaa.data.dto.StudentDto
 import noor.serry.rawaa.data.repository.UniversityRepository

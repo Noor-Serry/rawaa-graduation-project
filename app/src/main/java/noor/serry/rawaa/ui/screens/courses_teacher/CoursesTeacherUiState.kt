@@ -7,8 +7,8 @@ data class CoursesTeacherUiState(
     val activeCourses: List<CourseDto> = emptyList(),
     val archivedCourses: List<CourseDto> = emptyList(),
     val selectedTab: CourseTab = CourseTab.ACTIVE,
+    // Derived from DoctorDashboardDto.total_students (sum of enrolledCount across all courses)
     val totalStudents: Int = 0,
-    val totalPending: Int = 0,
     val error: String? = null,
 )
 

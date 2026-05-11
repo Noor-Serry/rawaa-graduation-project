@@ -35,7 +35,11 @@ class CoursesTeacherViewModel(
                         isLoading = false,
                         activeCourses = active,
                         archivedCourses = archived,
-                        totalStudents = totalStudents,
+                        // totalStudents is derived from DoctorDashboardDto.total_students
+                        // when available, otherwise sum enrolledCount across courses.
+                        totalStudents = data?.totalStudents
+                            ?.takeIf { it > 0 }
+                            ?: totalStudents,
                     )
                 }
             },
@@ -51,6 +55,6 @@ class CoursesTeacherViewModel(
     }
 
     fun onCourseClicked(courseId: Int) {
-        sendNewNavigationEffect(CoursesTeacherEffect.NavigateToCourseDetail(courseId))
+        sendNewEffect(CoursesTeacherEffect.NavigateToCourseDetail(courseId))
     }
 }

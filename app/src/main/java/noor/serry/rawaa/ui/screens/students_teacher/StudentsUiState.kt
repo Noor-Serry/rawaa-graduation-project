@@ -1,4 +1,4 @@
-package noor.serry.rawaa.ui.screens.students
+package noor.serry.rawaa.ui.screens.students_teacher
 
 data class StudentsUiState(
     val isLoading: Boolean = true,
