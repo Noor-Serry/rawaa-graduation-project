@@ -3,6 +3,9 @@ package noor.serry.rawaa.ui.screens.profile_teacher
 import noor.serry.rawaa.data.repository.UniversityRepository
 import noor.serry.rawaa.ui.base.BaseViewModel
 import noor.serry.rawaa.ui.base.DispatcherProvider
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
 
 class ProfileTeacherViewModel(
     private val repository: UniversityRepository,
@@ -29,6 +32,8 @@ class ProfileTeacherViewModel(
                 val dashboard = dashboardResponse.data
                 val courses = dashboard?.courses ?: emptyList()
                 val totalStudents = courses.sumOf { it.enrolledCount ?: 0 }
+                val hireDate = user?.profile?.hireDate
+                val years = hireDate?.let { computeYearsOfExperience(it) } ?: 0
 
                 updateState { state ->
                     state.copy(
@@ -36,6 +41,7 @@ class ProfileTeacherViewModel(
                         user = user,
                         activeCourses = courses,
                         totalStudents = totalStudents,
+                        yearsOfExperience = years,
                     )
                 }
             },
@@ -46,7 +52,21 @@ class ProfileTeacherViewModel(
         )
     }
 
-    fun onEditProfileClicked() {
-        sendNewNavigationEffect(ProfileTeacherEffect.NavigateToEditProfile)
+    // ── helpers ───────────────────────────────────────────────────────────────
+
+    private fun computeYearsOfExperience(hireDateStr: String): Int {
+        val formats = listOf(
+            DateTimeFormatter.ofPattern("yyyy-MM-dd"),
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"),
+            DateTimeFormatter.ofPattern("dd/MM/yyyy"),
+        )
+        val parsed = formats.firstNotNullOfOrNull { fmt ->
+            try {
+                LocalDate.parse(hireDateStr.take(10), fmt)
+            } catch (e: DateTimeParseException) {
+                null
+            }
+        } ?: return 0
+        return maxOf(0, LocalDate.now().year - parsed.year)
     }
 }
