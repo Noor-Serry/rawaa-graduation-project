@@ -13,13 +13,25 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation3.runtime.NavKey
 import noor.serry.designsystem.design.AppTheme
 import noor.serry.rawaa.R
 
 enum class TeacherNavTab {
     HOME, STUDENTS, ASSESSMENT, COURSES, PROFILE
 }
+fun NavKey.toNavTab(): TeacherNavTab? {
+    return when (this) {
+        TeacherRouteKeys.Home -> TeacherNavTab.HOME
+        TeacherRouteKeys.Students -> TeacherNavTab.STUDENTS
+        TeacherRouteKeys.Assessment -> TeacherNavTab.ASSESSMENT
+        TeacherRouteKeys.Courses -> TeacherNavTab.COURSES
+        TeacherRouteKeys.Profile -> TeacherNavTab.PROFILE
 
+        is TeacherRouteKeys.StudentProfile -> null
+        else -> {null }
+    }
+}
 data class TeacherBottomNavItem(
     val tab: TeacherNavTab,
     val iconRes: Int,

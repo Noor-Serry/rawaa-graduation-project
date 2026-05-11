@@ -20,6 +20,7 @@ import noor.serry.designsystem.design.AppTheme
 import noor.serry.rawaa.R
 import noor.serry.rawaa.data.dto.CourseDto
 import noor.serry.rawaa.data.dto.ScheduleSessionDto
+import noor.serry.rawaa.data.dto.UpcomingExamDto
 import noor.serry.rawaa.ui.navigation.teatcher.TeacherBackStackProvider
 import noor.serry.rawaa.ui.navigation.teatcher.TeacherRouteKeys
 import org.koin.androidx.compose.koinViewModel
@@ -37,7 +38,7 @@ fun HomeTeacherScreen(
                 is HomeTeacherEffect.NavigateToCourses -> backStack.add(TeacherRouteKeys.Courses)
                 is HomeTeacherEffect.NavigateToGrading -> backStack.add(TeacherRouteKeys.Assessment)
                 is HomeTeacherEffect.NavigateToCourseDetail -> backStack.add(TeacherRouteKeys.Courses)
-                is HomeTeacherEffect.ShowError -> { /* show snackbar if needed */ }
+                is HomeTeacherEffect.ShowError -> {}
             }
         }
     }
@@ -49,216 +50,137 @@ fun HomeTeacherScreen(
         return
     }
 
-    LazyColumn(
+    Column(
         modifier = Modifier
             .fillMaxSize()
             .background(AppTheme.color.bg),
-        contentPadding = PaddingValues(bottom = 24.dp),
     ) {
-        // ── Header banner ──────────────────────────────────────────────────
-        // Shows: doctorName (GET /api/auth/me → UserDto.name)
-        //        totalStudents (DoctorDashboardDto.totalStudents)
-        //        totalCourses  (DoctorDashboardDto.totalCourses)
-        //
-        // "مهمة معلقة" stat REMOVED — DoctorDashboardDto has no pending-tasks count.
-        item {
-            HomeTeacherHeader(
-                name = state.doctorName,
-                totalStudents = state.totalStudents,
-                activeCourses = state.totalCourses,
-            )
-        }
-
-        // ── Quick actions ──────────────────────────────────────────────────
-        // Only two actions are kept:
-        //   • "التصحيح" → navigates to grading/assessment screen (endpoint exists)
-        //   • "إدارة المقررات" → navigates to courses list (GET /api/courses)
-        //
-        // Removed: "إضافة مقرر" (admin-only endpoint), "واجب جديد" (no endpoint),
-        //          "التقارير" (admin-only endpoint).
-        item {
-            QuickActionsSection(
-                onGrading = { viewModel.onStartGradingClicked() },
-                onViewCourses = { viewModel.onViewAllCoursesClicked() },
-            )
-        }
-
-        // ── Today's lectures ───────────────────────────────────────────────
-        // Source: DoctorDashboardDto.schedule (List<ScheduleSessionDto>)
-        // Displayed fields: courseName, startTime, endTime, roomName, enrolled
-        //
-        // The "ابدأ" button from the original design is REMOVED — there is no
-        // "start lecture" endpoint in the backend. Clicking it would be a no-op.
-        if (state.todaySchedule.isNotEmpty()) {
-            item {
-                SectionHeader(
-                    title = "محاضرات اليوم",
-                    onViewAll = { backStack.add(TeacherRouteKeys.Courses) },
-                )
-            }
-            items(state.todaySchedule.take(3)) { session ->
-                TodaySessionCard(session = session)
-            }
-        }
-
-        // ── Upcoming exams ─────────────────────────────────────────────────
-        // Source: DoctorDashboardDto.upcomingExams (List<UpcomingExamDto>)
-        // Displayed fields: title, type, courseName, startAt
-        if (state.upcomingExams.isNotEmpty()) {
-            item {
-                SectionHeader(
-                    title = "الاختبارات القادمة",
-                    onViewAll = { backStack.add(TeacherRouteKeys.Assessment) },
-                )
-            }
-            items(state.upcomingExams.take(3)) { exam ->
-                UpcomingExamCard(exam = exam)
-            }
-        }
-
-        // ── My courses ─────────────────────────────────────────────────────
-        // Source: DoctorDashboardDto.courses (List<CourseDto>)
-        // Displayed fields: name, code, enrolledCount, maxStudents, isActive
-        //
-        // REMOVED from card:
-        //   • "85% المعدل" — no average/grade field in CourseDto
-        //   • "12 واجب"    — no assignment count in CourseDto or DoctorDashboardDto
-        if (state.courses.isNotEmpty()) {
-            item {
-                SectionHeader(
-                    title = "مقرراتي",
-                    onViewAll = { viewModel.onViewAllCoursesClicked() },
-                )
-            }
-            items(state.courses) { course ->
-                DashboardCourseCard(
-                    course = course,
-                    onManage = { viewModel.onManageCourseClicked(course.id) },
-                )
-            }
-        }
-    }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Header
-// ─────────────────────────────────────────────────────────────────────────────
-
-@Composable
-private fun HomeTeacherHeader(
-    name: String,
-    totalStudents: Int,
-    activeCourses: Int,
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(AppTheme.color.primaryDark)
-            .padding(horizontal = 20.dp, vertical = 24.dp),
-    ) {
-        Column {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(AppTheme.color.secondary),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_home),
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(26.dp),
-                    )
-                }
-                Spacer(Modifier.width(12.dp))
-                Column {
-                    Text(
-                        text = "مرحباً، $name!",
-                        color = Color.White,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    Text(
-                        text = "جاهز لبدء يوم تعليمي منمر",
-                        color = Color.White.copy(alpha = 0.75f),
-                        fontSize = 13.sp,
-                    )
-                }
-            }
-
-            Spacer(Modifier.height(20.dp))
-
-            // Only two real stats are available from DoctorDashboardDto:
-            //   totalStudents and totalCourses (= activeCourses).
-            // "مهمة معلقة" stat removed — no backend field.
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-            ) {
-                HeaderStatItem(value = "$totalStudents", label = "طالب")
-                HeaderStatItem(value = "$activeCourses", label = "مقرر نشط")
-            }
-        }
-    }
-}
-
-@Composable
-private fun HeaderStatItem(value: String, label: String) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(value, color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
-        Text(label, color = Color.White.copy(alpha = 0.75f), fontSize = 12.sp)
-    }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Quick actions
-// Only actions that have a matching backend endpoint or navigation destination.
-// ─────────────────────────────────────────────────────────────────────────────
-
-@Composable
-private fun QuickActionsSection(
-    onGrading: () -> Unit,
-    onViewCourses: () -> Unit,
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 16.dp),
-    ) {
-        Text(
-            text = "إجراءات سريعة",
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold,
-            color = AppTheme.color.text,
-            modifier = Modifier.padding(bottom = 12.dp),
+        HomeTeacherHeaderSection(
+            doctorName = state.doctorName,
+            totalStudents = state.totalStudents,
+            totalCourses = state.totalCourses,
+            upcomingExamsCount = state.upcomingExams.size,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
         )
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+
+        // ── Scrollable body ────────────────────────────────────────────────
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(bottom = 24.dp),
         ) {
-            // "إدارة المقررات" — navigates to Courses (GET /api/courses available)
-            QuickActionCard(
-                modifier = Modifier.weight(1f),
-                iconRes = R.drawable.ic_book,
-                label = "إدارة المقررات",
-                subLabel = "عرض المقررات",
-                isPrimary = true,
-                onClick = onViewCourses,
-            )
-            // "التصحيح" — navigates to Assessment/Grading screen
-            QuickActionCard(
-                modifier = Modifier.weight(1f),
-                iconRes = R.drawable.badge,
-                label = "التصحيح",
-                subLabel = "مراجعة الإجابات",
-                isPrimary = false,
-                onClick = onGrading,
-            )
+            // Quick actions
+            item {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 16.dp),
+                ) {
+                    Text(
+                        text = "إجراءات سريعة",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = AppTheme.color.text,
+                        modifier = Modifier.padding(bottom = 12.dp),
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        QuickActionCard(
+                            modifier = Modifier.weight(1f),
+                            iconRes = R.drawable.ic_book,
+                            label = "إدارة المقررات",
+                            subLabel = "عرض المقررات",
+                            isPrimary = true,
+                            onClick = { viewModel.onViewAllCoursesClicked() },
+                        )
+                        QuickActionCard(
+                            modifier = Modifier.weight(1f),
+                            iconRes = R.drawable.badge,
+                            label = "التصحيح",
+                            subLabel = "مراجعة الإجابات",
+                            isPrimary = false,
+                            onClick = { viewModel.onStartGradingClicked() },
+                        )
+                    }
+                }
+            }
+
+            // Today's lectures
+            if (state.todaySchedule.isNotEmpty()) {
+                item {
+                    SectionHeader(
+                        title = "محاضرات اليوم",
+                        onViewAll = { backStack.add(TeacherRouteKeys.Courses) },
+                    )
+                }
+                items(state.todaySchedule.take(3)) { session ->
+                    TodaySessionCard(session = session)
+                }
+            }
+
+            // Upcoming exams
+            if (state.upcomingExams.isNotEmpty()) {
+                item {
+                    SectionHeader(
+                        title = "الاختبارات القادمة",
+                        onViewAll = { backStack.add(TeacherRouteKeys.Assessment) },
+                    )
+                }
+                items(state.upcomingExams.take(3)) { exam ->
+                    UpcomingExamCard(exam = exam)
+                }
+            }
+
+            // My courses
+            if (state.courses.isNotEmpty()) {
+                item {
+                    SectionHeader(
+                        title = "مقرراتي",
+                        onViewAll = { viewModel.onViewAllCoursesClicked() },
+                    )
+                }
+                items(state.courses) { course ->
+                    DashboardCourseCard(
+                        course = course,
+                        onManage = { viewModel.onManageCourseClicked(course.id) },
+                    )
+                }
+            }
         }
     }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// StatCard — identical to CoursesTeacherScreen
+// ─────────────────────────────────────────────────────────────────────────────
+
+@Composable
+private fun StatCard(
+    modifier: Modifier,
+    value: String,
+    label: String,
+    valueColor: Color,
+) {
+    Card(
+        modifier = modifier,
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text(value, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = valueColor)
+            Text(label, fontSize = 11.sp, color = AppTheme.color.textSecondary)
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// QuickActionCard
+// ─────────────────────────────────────────────────────────────────────────────
 
 @Composable
 private fun QuickActionCard(
@@ -273,7 +195,7 @@ private fun QuickActionCard(
         modifier = modifier.clickable(onClick = onClick),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (isPrimary) AppTheme.color.primaryDark else Color.White,
+            containerColor = if (isPrimary) AppTheme.color.primary else Color.White,
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
@@ -288,7 +210,7 @@ private fun QuickActionCard(
                     .clip(RoundedCornerShape(8.dp))
                     .background(
                         if (isPrimary) Color.White.copy(alpha = 0.15f)
-                        else AppTheme.color.primary.copy(alpha = 0.1f)
+                        else AppTheme.color.primary.copy(alpha = 0.1f),
                     ),
                 contentAlignment = Alignment.Center,
             ) {
@@ -317,7 +239,7 @@ private fun QuickActionCard(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Section header
+// SectionHeader — identical pattern to CoursesTeacherScreen
 // ─────────────────────────────────────────────────────────────────────────────
 
 @Composable
@@ -329,7 +251,12 @@ private fun SectionHeader(title: String, onViewAll: () -> Unit) {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(title, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = AppTheme.color.text)
+        Text(
+            text = title,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold,
+            color = AppTheme.color.text,
+        )
         Text(
             text = "عرض الكل",
             fontSize = 13.sp,
@@ -340,11 +267,7 @@ private fun SectionHeader(title: String, onViewAll: () -> Unit) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Today session card
-// Fields sourced from ScheduleSessionDto:
-//   courseName, startTime, endTime, roomName, enrolled
-//
-// "ابدأ" action button REMOVED — no backend endpoint to start a lecture.
+// TodaySessionCard — same card shape / elevation / padding as CourseTeacherCard
 // ─────────────────────────────────────────────────────────────────────────────
 
 @Composable
@@ -353,9 +276,9 @@ private fun TodaySessionCard(session: ScheduleSessionDto) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 4.dp),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
         Row(
             modifier = Modifier
@@ -368,24 +291,23 @@ private fun TodaySessionCard(session: ScheduleSessionDto) {
                 modifier = Modifier
                     .size(40.dp)
                     .clip(RoundedCornerShape(10.dp))
-                    .background(AppTheme.color.primaryDark),
+                    .background(AppTheme.color.primary.copy(alpha = 0.1f)),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     painter = painterResource(R.drawable.ic_book),
                     contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(20.dp),
+                    tint = AppTheme.color.primary,
+                    modifier = Modifier.size(22.dp),
                 )
             }
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = session.courseName ?: "",
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp,
                     color = AppTheme.color.text,
                 )
-                // Time range — both startTime and endTime are guaranteed non-null in ScheduleSessionDto
                 val timeRange = "${session.startTime} – ${session.endTime}"
                 val room = session.roomName?.let { " • $it" } ?: ""
                 val students = session.enrolled?.let { " • $it طالب" } ?: ""
@@ -400,19 +322,18 @@ private fun TodaySessionCard(session: ScheduleSessionDto) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Upcoming exam card
-// Fields sourced from UpcomingExamDto: title, type, courseName, startAt
+// UpcomingExamCard
 // ─────────────────────────────────────────────────────────────────────────────
 
 @Composable
-private fun UpcomingExamCard(exam: noor.serry.rawaa.data.dto.UpcomingExamDto) {
+private fun UpcomingExamCard(exam: UpcomingExamDto) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 4.dp),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
         Row(
             modifier = Modifier
@@ -432,14 +353,14 @@ private fun UpcomingExamCard(exam: noor.serry.rawaa.data.dto.UpcomingExamDto) {
                     painter = painterResource(R.drawable.badge),
                     contentDescription = null,
                     tint = AppTheme.color.secondary,
-                    modifier = Modifier.size(20.dp),
+                    modifier = Modifier.size(22.dp),
                 )
             }
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = exam.title,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp,
                     color = AppTheme.color.text,
                 )
                 val course = exam.courseName?.let { "$it • " } ?: ""
@@ -450,7 +371,6 @@ private fun UpcomingExamCard(exam: noor.serry.rawaa.data.dto.UpcomingExamDto) {
                     color = AppTheme.color.textSecondary,
                 )
             }
-            // Exam type badge
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(8.dp))
@@ -469,12 +389,7 @@ private fun UpcomingExamCard(exam: noor.serry.rawaa.data.dto.UpcomingExamDto) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Course card
-// Fields sourced from CourseDto: name, code, enrolledCount, maxStudents, isActive
-//
-// REMOVED from design:
-//   • "85% المعدل" — no average/grade field in CourseDto or DoctorDashboardDto
-//   • "12 واجب"    — no assignment count field in any available DTO
+// DashboardCourseCard — mirrors CourseTeacherCard from CoursesTeacherScreen
 // ─────────────────────────────────────────────────────────────────────────────
 
 @Composable
@@ -483,81 +398,73 @@ private fun DashboardCourseCard(course: CourseDto, onManage: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 4.dp),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
+                verticalAlignment = Alignment.Top,
             ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.weight(1f),
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(AppTheme.color.primaryDark.copy(alpha = 0.15f)),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_book),
-                            contentDescription = null,
-                            tint = AppTheme.color.primaryDark,
-                            modifier = Modifier.size(20.dp),
-                        )
-                    }
-                    Column {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = course.code,
+                        fontSize = 12.sp,
+                        color = AppTheme.color.textSecondary,
+                    )
+                    Text(
+                        text = course.name,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp,
+                        color = AppTheme.color.text,
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(
-                            text = course.name,
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 14.sp,
-                            color = AppTheme.color.text,
+                            text = "${course.enrolledCount ?: 0} طالب",
+                            fontSize = 12.sp,
+                            color = AppTheme.color.textSecondary,
                         )
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            // enrolledCount: CourseDto field (nullable, defaults to null)
-                            Text(
-                                text = "${course.enrolledCount ?: 0} طالب",
-                                fontSize = 12.sp,
-                                color = AppTheme.color.textSecondary,
-                            )
+                        if (course.maxStudents > 0) {
                             Text("•", fontSize = 12.sp, color = AppTheme.color.textSecondary)
                             Text(
-                                text = course.code,
+                                text = "الحد ${course.maxStudents}",
                                 fontSize = 12.sp,
                                 color = AppTheme.color.textSecondary,
                             )
-                            // maxStudents is always present in CourseDto (defaults to 50)
-                            if (course.maxStudents > 0) {
-                                Text("•", fontSize = 12.sp, color = AppTheme.color.textSecondary)
-                                Text(
-                                    text = "الحد ${course.maxStudents}",
-                                    fontSize = 12.sp,
-                                    color = AppTheme.color.textSecondary,
-                                )
-                            }
                         }
                     }
                 }
-                // Active/inactive badge — sourced from CourseDto.isActive (Int 0/1)
-                if (course.isActive == 0) {
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(6.dp))
-                            .background(Color(0xFFF5F5F5))
-                            .padding(horizontal = 8.dp, vertical = 3.dp),
-                    ) {
-                        Text(
-                            text = "غير نشط",
-                            fontSize = 11.sp,
-                            color = AppTheme.color.textSecondary,
-                        )
-                    }
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(AppTheme.color.primary.copy(alpha = 0.1f)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_book),
+                        contentDescription = null,
+                        tint = AppTheme.color.primary,
+                        modifier = Modifier.size(22.dp),
+                    )
+                }
+            }
+
+            if (course.isActive == 0) {
+                Spacer(Modifier.height(8.dp))
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(AppTheme.color.bg)
+                        .padding(horizontal = 8.dp, vertical = 3.dp),
+                ) {
+                    Text(
+                        text = "غير نشط",
+                        fontSize = 11.sp,
+                        color = AppTheme.color.textSecondary,
+                    )
                 }
             }
 
@@ -567,7 +474,7 @@ private fun DashboardCourseCard(course: CourseDto, onManage: () -> Unit) {
                 onClick = onManage,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(10.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = AppTheme.color.primaryDark),
+                colors = ButtonDefaults.buttonColors(containerColor = AppTheme.color.primary),
             ) {
                 Text("إدارة المقرر", color = Color.White, fontSize = 13.sp)
                 Spacer(Modifier.width(4.dp))

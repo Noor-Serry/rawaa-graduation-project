@@ -25,7 +25,6 @@ import noor.serry.designsystem.design.AppTheme
 @Composable
 fun TeacherEntryPoint() {
     val backStack = rememberNavBackStack(TeacherRouteKeys.Home)
-    var selectedTab by remember { mutableStateOf(TeacherNavTab.HOME) }
 
     CompositionLocalProvider(
         TeacherBackStackProvider provides backStack
@@ -34,10 +33,9 @@ fun TeacherEntryPoint() {
             Scaffold(
                 bottomBar = {
                     HomeTeacherBottomNav(
-                        selectedTab = selectedTab,
+                        selectedTab =backStack.lastOrNull()?.let { it.toNavTab() } ?: TeacherNavTab.HOME,
                         onTabSelected = { item ->
                             if (backStack.last() != item.route) {
-                                selectedTab = item.tab
                                 backStack.add(item.route)
                             }
                         },

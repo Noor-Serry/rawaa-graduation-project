@@ -1,7 +1,11 @@
 package noor.serry.rawaa.ui.screens.courses_teacher
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -71,7 +75,7 @@ fun CoursesTeacherScreen(
     }
 
     CoursesTeacherContent(
-        state     = state,
+        state         = state,
         onTabSelected = viewModel::selectTab,
         onViewDetails = viewModel::onCourseClicked,
     )
@@ -157,6 +161,7 @@ private fun CoursesTeacherHero(
             .padding(horizontal = 24.dp, vertical = 28.dp),
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+
             // Title block
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
@@ -171,28 +176,28 @@ private fun CoursesTeacherHero(
                 )
             }
 
-            // Stats row — reuses the same StatChip pattern as the profile screen
+            // Stats row
             Row(
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                 modifier              = Modifier.fillMaxWidth(),
             ) {
                 HeroStatCard(
-                    value    = "${state.totalStudents}",
-                    label    = "إجمالي الطلاب",
-                    iconRes  = R.drawable.ic_person,
-                    modifier = Modifier.weight(1f),
+                    value      = "${state.totalStudents}",
+                    label      = "طالب",
+                    valueColor = Color(0xFFF59E0B),
+                    modifier   = Modifier.weight(1f),
                 )
                 HeroStatCard(
-                    value    = "${state.activeCourses.size}",
-                    label    = "مقررات نشطة",
-                    iconRes  = R.drawable.ic_book,
-                    modifier = Modifier.weight(1f),
+                    value      = "${state.activeCourses.size}",
+                    label      = "مقرر نشط",
+                    valueColor = AppTheme.color.text,
+                    modifier   = Modifier.weight(1f),
                 )
                 HeroStatCard(
-                    value    = "${state.archivedCourses.size}",
-                    label    = "مؤرشفة",
-                    iconRes  = R.drawable.ic_calendar,
-                    modifier = Modifier.weight(1f),
+                    value      = "${state.archivedCourses.size}",
+                    label      = "مؤرشفة",
+                    valueColor = AppTheme.color.text,
+                    modifier   = Modifier.weight(1f),
                 )
             }
         }
@@ -203,42 +208,28 @@ private fun CoursesTeacherHero(
 private fun HeroStatCard(
     value: String,
     label: String,
-    iconRes: Int,
+    valueColor: Color = AppTheme.color.primary,
     modifier: Modifier = Modifier,
 ) {
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(14.dp))
             .background(AppTheme.color.bg)
-            .padding(vertical = 12.dp, horizontal = 6.dp),
+            .padding(vertical = 14.dp, horizontal = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        Box(
-            modifier = Modifier
-                .size(34.dp)
-                .clip(RoundedCornerShape(10.dp))
-                .background(AppTheme.color.primary.copy(alpha = .10f)),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                painter  = painterResource(iconRes),
-                tint     = AppTheme.color.primary,
-                modifier = Modifier.size(17.dp),
-            )
-        }
         Text(
             text      = value,
-            color     = AppTheme.color.text,
-            style     = AppTheme.textStyle.body.medium.copy(fontWeight = FontWeight.ExtraBold),
+            color     = valueColor,
+            style     = AppTheme.textStyle.headline.small.copy(fontWeight = FontWeight.ExtraBold),
             textAlign = TextAlign.Center,
         )
         Text(
             text      = label,
             color     = AppTheme.color.textSecondary,
-            style     = AppTheme.textStyle.label.small.copy(fontSize = 10.sp),
+            style     = AppTheme.textStyle.label.small.copy(fontSize = 11.sp),
             textAlign = TextAlign.Center,
-            minLines  = 2,
         )
     }
 }
@@ -251,9 +242,16 @@ private fun CoursesTabRow(
     onTabSelected: (CourseTab) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val colors = AppTheme.color
+
     Row(
-        modifier              = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(colors.bg)
+            .border(1.dp, colors.border, RoundedCornerShape(12.dp))
+            .padding(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         CourseTabButton(
             label      = "المقررات النشطة (${state.activeCourses.size})",
@@ -277,23 +275,33 @@ private fun CourseTabButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val bgColor    = if (isSelected) AppTheme.color.primary else AppTheme.color.bg
-    val textColor  = if (isSelected) AppTheme.color.bg else AppTheme.color.textSecondary
-    val borderColor = if (isSelected) AppTheme.color.primary else AppTheme.color.border.copy(alpha = .7f)
+    val colors    = AppTheme.color
+    val textStyle = AppTheme.textStyle
+
+    val bgColor by animateColorAsState(
+        targetValue   = if (isSelected) colors.primary else colors.bg,
+        animationSpec = tween(durationMillis = 250, easing = FastOutSlowInEasing),
+        label         = "tab_bg",
+    )
+    val textColor by animateColorAsState(
+        targetValue   = if (isSelected) colors.bg else colors.textSecondary,
+        animationSpec = tween(durationMillis = 250, easing = FastOutSlowInEasing),
+        label         = "tab_text",
+    )
 
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(10.dp))
             .background(bgColor)
-            .border(1.dp, borderColor, RoundedCornerShape(12.dp))
-            .clickAnimation { onClick() }
-            .padding(vertical = 11.dp),
+            .clickable(onClick = onClick)
+            .padding(vertical = 10.dp),
         contentAlignment = Alignment.Center,
     ) {
         Text(
-            text  = label,
-            color = textColor,
-            style = AppTheme.textStyle.body.small.copy(fontWeight = FontWeight.SemiBold),
+            text      = label,
+            style     = textStyle.label.large,
+            color     = textColor,
+            textAlign = TextAlign.Center,
         )
     }
 }
@@ -321,7 +329,6 @@ fun CourseTeacherCard(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment     = Alignment.Top,
         ) {
-            // Icon box — same style as SectionCard in profile
             Box(
                 modifier = Modifier
                     .size(40.dp)
@@ -362,7 +369,6 @@ fun CourseTeacherCard(
                 }
             }
 
-            // Department badge — same pill style as profile's roleTitle badge
             if (course.departmentName != null) {
                 Box(
                     modifier = Modifier
@@ -419,27 +425,10 @@ fun CourseTeacherCard(
                 modifier = Modifier.weight(1f),
             )
         }
-
-        // ── CTA button — same outlined style as profile retry ─────────────────
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(10.dp))
-                .border(1.dp, AppTheme.color.primary.copy(alpha = .50f), RoundedCornerShape(10.dp))
-                .clickAnimation { onViewDetails() }
-                .padding(vertical = 11.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                text  = "عرض التفاصيل",
-                color = AppTheme.color.primary,
-                style = AppTheme.textStyle.body.small.copy(fontWeight = FontWeight.SemiBold),
-            )
-        }
     }
 }
 
-// ── Info badge ─────────────────────────────────────────────────────────────────
+// ── Info badge ────────────────────────────────────────────────────────────────
 
 @Composable
 private fun CourseInfoBadge(
