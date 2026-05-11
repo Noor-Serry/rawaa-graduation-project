@@ -15,7 +15,6 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import noor.serry.rawaa.domain.exception.RawaaException
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -54,25 +53,22 @@ open class BaseViewModel<S, E>(
     protected fun <T> tryToExecute(
         action: suspend () -> T,
         onSuccess: (T) -> Unit = {},
-        onError: (RawaaException) -> Unit = {},
+        onError: (Exception) -> Unit = {},
         onCompletion: () -> Unit = {},
         dispatcher: CoroutineDispatcher = dispatcherProvider.IO,
     ): Job {
         return viewModelScope.launch(dispatcher) {
             try {
-
                 onSuccess(action())
-            } catch (exception: RawaaException) {
-                Log.e("BaseViewModel.kt",  "${exception.javaClass.simpleName}: ${exception.message}")
-                onError(exception)
             } catch (exception: Exception) {
-                Log.e("BaseViewModel.kt",  "${exception.javaClass.simpleName}: ${exception.message}")
-                onError(RawaaException(exception.message ?: "Unknown error"))
+                Log.e("BaseViewModel.kt", "${exception.javaClass.simpleName}: ${exception.message}")
+                onError(exception)
             } finally {
                 onCompletion()
             }
         }
     }
+
     @OptIn(ExperimentalTime::class)
     private fun <T> Flow<T>.throttleFirstSelective(
         periodMillis: Long,

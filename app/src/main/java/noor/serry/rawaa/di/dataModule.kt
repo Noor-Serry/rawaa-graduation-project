@@ -4,24 +4,28 @@ import android.content.Context
 import android.util.Log
 import androidx.datastore.preferences.preferencesDataStore
 import io.ktor.client.HttpClient
+import io.ktor.client.plugins.auth.Auth
+import io.ktor.client.plugins.auth.providers.BearerTokens
+import io.ktor.client.plugins.auth.providers.bearer
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
+import io.ktor.client.request.header
+import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
+import io.ktor.http.encodedPath
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 import noor.serry.rawaa.data.local.TokenDataStore
 import noor.serry.rawaa.data.remote.ApiClient
-import noor.serry.rawaa.data.repository.*
-import noor.serry.rawaa.domain.repository.*
+import noor.serry.rawaa.data.repository.UniversityRepository
 import org.koin.android.ext.koin.androidContext
-import org.koin.core.module.dsl.bind
-import org.koin.core.module.dsl.singleOf
-import org.koin.dsl.bind
 import org.koin.dsl.module
 
 /** Base URL — change to your deployed backend host. */
-private const val BASE_URL = "https://abdallah-elrefai.com/university-api-v4"
+private const val BASE_URL = "http://192.168.1.50:80/university-api-v3"
 private val Context.dataStore by preferencesDataStore(name = "rawaa_prefs")
 
 val dataModule = module {
@@ -29,7 +33,13 @@ val dataModule = module {
     // ── Network ───────────────────────────────────────────────────────────────
 
     single {
+        val tokenManager = get<TokenDataStore>()
+
         HttpClient {
+            defaultRequest {
+                header(HttpHeaders.ContentType, ContentType.Application.Json)
+
+            }
             install(ContentNegotiation) {
                 json(Json { ignoreUnknownKeys = true })
             }
@@ -41,34 +51,38 @@ val dataModule = module {
                 }
                 level = LogLevel.BODY
             }
+            install(Auth) {
+                bearer {
+                    loadTokens {
+                        val token = tokenManager.getToken()
+                        Log.d("Ktor", token.toString())
+
+                        if (token != null) {
+                            BearerTokens(token, "")
+                        } else {
+                            null
+                        }
+                    }
+                    sendWithoutRequest { request ->
+                        request.url.encodedPath.startsWith("/university-api-v3/api/")
+                    }
+                }
+            }
         }
+
     }
 
     // ── Local storage ─────────────────────────────────────────────────────────
 
-    single { TokenDataStore(get()) }
+    single { androidContext().dataStore }
 
-    single {
-        androidContext().dataStore   // androidx.datastore.preferences.preferencesDataStore
-    }
+    single { TokenDataStore(get()) }
 
     // ── API client ────────────────────────────────────────────────────────────
 
     single { ApiClient(client = get(), tokenStore = get(), baseUrl = BASE_URL) }
 
-    // ── Auth (not a domain interface — used directly by Auth ViewModel) ───────
+    // ── Repository ────────────────────────────────────────────────────────────
 
-    single { AuthRepositoryImpl(api = get(), tokenStore = get()) }
-
-    // ── Domain repositories ───────────────────────────────────────────────────
-
-    singleOf(::DashboardRepositoryImpl)    { bind<DashboardRepository>() }
-    singleOf(::CourseRepositoryImpl)       { bind<CourseRepository>() }
-    singleOf(::AssignmentRepositoryImpl)   { bind<AssignmentRepository>() }
-    singleOf(::NotificationRepositoryImpl) { bind<NotificationRepository>() }
-    singleOf(::ScheduleRepositoryImpl)     { bind<ScheduleRepository>() }
-    singleOf(::StudentRepositoryImpl)      { bind<StudentRepository>() }
-    singleOf(::ProfileRepositoryImpl)      { bind<ProfileRepository>() }
-    singleOf(::DepartmentRepository)
-   // singleOf(::GoogleAuthDataSourceImpl) bind GoogleAuthDataSource
+    single { UniversityRepository(client = get(), tokenStore = get(), baseUrl = BASE_URL) }
 }

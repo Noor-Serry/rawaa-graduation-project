@@ -17,39 +17,57 @@ import noor.serry.rawaa.ui.navigation.base.AppRoute
 import noor.serry.rawaa.ui.navigation.base.appEntryProvider
 import org.koin.compose.viewmodel.koinViewModel
 
-
 @Composable
 fun RawaaApp(
     mainViewModel: MainViewModel = koinViewModel()
-    ) {
-
+) {
     val uiState by mainViewModel.uiState.collectAsStateWithLifecycle()
-    if (uiState ==MainUiState.Loading ) return
-    val startDestination = when(uiState){
-        MainUiState.Loading ,
-        MainUiState.ShowAuth -> AppRoute.Login
-        is MainUiState.ShowMain -> {
-            Log.e("RawaaApp.kt",""+uiState.toString() )
-            if ((uiState as MainUiState.ShowMain).role == "doctor")
-                AppRoute.TeacherEntry else AppRoute.StudentEntry
-        }
-        MainUiState.ShowOnboarding -> AppRoute.Onboarding
-    }
-    Log.e("RawaaApp.kt", startDestination.toString())
-    val backStack = rememberNavBackStack(startDestination)
-    CompositionLocalProvider(
-        BackStackProvider provides backStack
-    ) {
+    if (uiState == MainUiState.Loading) return
 
+    val startDestination = when (uiState) {
+        MainUiState.Loading,
+        MainUiState.ShowAuth   -> AppRoute.Login
+        MainUiState.ShowOnboarding -> AppRoute.Onboarding
+        is MainUiState.ShowMain -> {
+            val role = (uiState as MainUiState.ShowMain).role
+            Log.e("RawaaApp", "Resuming session as role=$role")
+            roleToRoute(role)
+        }
+    }
+
+    Log.e("RawaaApp", "startDestination=$startDestination")
+    val backStack = rememberNavBackStack(startDestination)
+
+    CompositionLocalProvider(BackStackProvider provides backStack) {
         NavDisplay(
             backStack = backStack,
             onBack = { backStack.removeLastOrNull() },
-            entryProvider = appEntryProvider
+            entryProvider = appEntryProvider,
         )
-}
+    }
 }
 
+/**
+ * Maps the persisted role string to the correct root [AppRoute].
+ *
+ * | Role string  | Entry point           |
+ * |--------------|-----------------------|
+ * | "student"    | StudentEntry          |
+ * | "doctor"     | TeacherEntry          |
+ * | "employee"   | TeacherEntry          |
+ * | "admin"      | AdminEntry            |
+ * | "super"      | SuperAdminEntry       |
+ * | anything else| Login (safe fallback) |
+ */
+private fun roleToRoute(role: String): AppRoute = when (role) {
+    "student"  -> AppRoute.StudentEntry
+    "doctor"   -> AppRoute.TeacherEntry
+    "employee" -> AppRoute.TeacherEntry
+    "admin"    -> AppRoute.AdminEntry
+    "super"    -> AppRoute.SuperAdminEntry
+    else       -> AppRoute.Login
+}
 
 @SuppressLint("CompositionLocalNaming")
 val BackStackProvider =
-    staticCompositionLocalOf<NavBackStack<NavKey>> { error("back stack dose not provided") }
+    staticCompositionLocalOf<NavBackStack<NavKey>> { error("back stack not provided") }

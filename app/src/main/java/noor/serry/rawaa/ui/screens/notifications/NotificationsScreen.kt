@@ -388,14 +388,14 @@ private fun FilterChip(
     )
     val iconRes = when (type) {
         NotificationType.GRADE       -> R.drawable.ic_grades
-        NotificationType.HOMEWORK    -> R.drawable.ic_book
+        NotificationType.ASSIGNMENT    -> R.drawable.ic_book
         NotificationType.EXAM        -> R.drawable.ic_calendar
         NotificationType.ANNOUNCEMENT -> R.drawable.ic_info
     }
 
     val iconColor = when (type) {
         NotificationType.GRADE       -> Color(0xFF10B981)
-        NotificationType.HOMEWORK    -> Color(0xFF3B82F6)
+        NotificationType.ASSIGNMENT    -> Color(0xFF3B82F6)
         NotificationType.EXAM        -> Color(0xFFF59E0B)
         NotificationType.ANNOUNCEMENT -> Color(0xFF8B5CF6)
     }

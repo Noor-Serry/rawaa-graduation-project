@@ -15,10 +15,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
+import noor.serry.designsystem.components.snackbar.SnackBarHost
 import noor.serry.designsystem.design.AppTheme
 import noor.serry.rawaa.ui.screens.home_student.components.HomeNavTab
 import noor.serry.rawaa.ui.screens.home_student.components.HomeStudentBottomNav
@@ -35,7 +37,9 @@ fun StudentEntryPoint() {
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             MenuScreen()
-            // Layer 1: Scaffold with nav + bottom bar
+            SnackBarHost(Modifier
+                .zIndex(100f)
+                .padding(top = 32.dp, start = 16.dp, end = 16.dp))
             Scaffold(
                 bottomBar = {
                     HomeStudentBottomNav(

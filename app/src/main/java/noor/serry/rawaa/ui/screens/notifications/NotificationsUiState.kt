@@ -24,9 +24,18 @@ data class NotificationsUiState(
 
 enum class NotificationsTab { ALL, UNREAD }
 
+/**
+ * Notification type filters.
+ *
+ * Server sends type values: "grade", "assignment", "exam", "announcement"
+ * The enum names match what the server actually sends so the mapper in
+ * NotificationsViewModel stays consistent.
+ *
+ * Renamed: HOMEWORK → ASSIGNMENT to match the "assignment" type string from the API.
+ */
 enum class NotificationType(val label: String) {
     GRADE("الدرجات"),
-    HOMEWORK("الواجبات"),
+    ASSIGNMENT("الواجبات"),   // server type = "assignment"
     EXAM("الاختبارات"),
     ANNOUNCEMENT("الإعلانات"),
 }

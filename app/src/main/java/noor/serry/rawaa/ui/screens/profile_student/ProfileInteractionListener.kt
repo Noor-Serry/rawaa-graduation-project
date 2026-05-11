@@ -4,6 +4,6 @@ interface ProfileInteractionListener {
     fun onEditProfileClick()
     fun onChangeAvatarClick()
     fun onEditFieldClick(field: ProfileField)
-    fun onAchievementsClick()
-    fun onCertificatesClick()
+    // Removed: onAchievementsClick — no achievements endpoint on server
+    // Removed: onCertificatesClick — no certificates endpoint on server
 }

@@ -43,7 +43,7 @@ private fun notificationColors(type: NotificationType): NotificationColors = whe
         iconBg   = Color(0x2010B981),
         iconTint = Color(0xFF10B981),
     )
-    NotificationType.HOMEWORK -> NotificationColors(
+    NotificationType.ASSIGNMENT -> NotificationColors(
         iconBg   = Color(0x203B82F6),
         iconTint = Color(0xFF3B82F6),
     )
@@ -59,7 +59,7 @@ private fun notificationColors(type: NotificationType): NotificationColors = whe
 
 private fun notificationIcon(type: NotificationType): Int = when (type) {
     NotificationType.GRADE       -> R.drawable.ic_grades
-    NotificationType.HOMEWORK    -> R.drawable.ic_book
+    NotificationType.ASSIGNMENT    -> R.drawable.ic_book
     NotificationType.EXAM        -> R.drawable.ic_calendar
     NotificationType.ANNOUNCEMENT -> R.drawable.ic_info
 }

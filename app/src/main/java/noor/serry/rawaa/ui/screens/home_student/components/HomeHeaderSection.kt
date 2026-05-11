@@ -13,11 +13,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Brush.Companion.verticalGradient
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import noor.serry.designsystem.components.Icon
@@ -25,15 +22,13 @@ import noor.serry.designsystem.components.Text
 import noor.serry.designsystem.design.AppTheme
 import noor.serry.rawaa.R
 
-
-
 @Composable
 fun HomeHeaderSection(
-    studentName: String,
-    gpa: String,
-    homeworkCount: Int,
-    activeCoursesCount: Int,
-    modifier: Modifier = Modifier
+    studentName: String,       // StudentDashboardDto.student.name
+    gpa: String,               // StudentDashboardDto.gpa (or student.gpa)
+    upcomingExamsCount: Int,   // StudentDashboardDto.upcomingExams.size — replaces homeworkCount
+    activeCoursesCount: Int,   // StudentDashboardDto.activeCourses
+    modifier: Modifier = Modifier,
 ) {
     Column(
         modifier = modifier
@@ -42,7 +37,7 @@ fun HomeHeaderSection(
                 brush = verticalGradient(
                     colors = listOf(
                         AppTheme.color.primary,
-                        AppTheme.color.primaryLight
+                        AppTheme.color.primaryLight,
                     )
                 ),
                 shape = RoundedCornerShape(24.dp)
@@ -53,7 +48,7 @@ fun HomeHeaderSection(
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(horizontalAlignment = Alignment.Start) {
                 Text(
@@ -67,43 +62,46 @@ fun HomeHeaderSection(
                     style = AppTheme.textStyle.body.medium.copy(fontWeight = FontWeight.Normal),
                 )
             }
-            // Yellow icon box
             Box(
                 modifier = Modifier
                     .size(48.dp)
                     .clip(RoundedCornerShape(16.dp))
                     .background(AppTheme.color.secondary),
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.Center,
             ) {
                 Icon(
-                    painter = painterResource(R.drawable.ic_trending_up), // use your trending/chart icon
+                    painter = painterResource(R.drawable.ic_trending_up),
                     contentDescription = null,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(24.dp),
                 )
             }
         }
 
-        // Stats Row
+        // Stats Row — all 3 values come from the server (StudentDashboardDto)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 20.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
+            // StudentDashboardDto.gpa
             HeaderStatCard(
                 value = gpa,
                 label = "المعدل\nالتراكمي",
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
             )
+            // StudentDashboardDto.upcomingExams.size
+            // (was homeworkCount — removed because no homework endpoint exists)
             HeaderStatCard(
-                value = homeworkCount.toString(),
-                label = "واجب قادم",
-                modifier = Modifier.weight(1f)
+                value = upcomingExamsCount.toString(),
+                label = "اختبار\nقادم",
+                modifier = Modifier.weight(1f),
             )
+            // StudentDashboardDto.activeCourses
             HeaderStatCard(
                 value = activeCoursesCount.toString(),
                 label = "مقرر نشط",
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
             )
         }
     }
@@ -113,14 +111,14 @@ fun HomeHeaderSection(
 private fun HeaderStatCard(
     value: String,
     label: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(16.dp))
             .background(AppTheme.color.bg.copy(alpha = .1f))
             .padding(12.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
             text = value,
@@ -132,7 +130,7 @@ private fun HeaderStatCard(
             color = AppTheme.color.bg.copy(alpha = 0.8f),
             style = AppTheme.textStyle.label.medium,
             modifier = Modifier.padding(top = 4.dp),
-            minLines = 2
+            minLines = 2,
         )
     }
 }

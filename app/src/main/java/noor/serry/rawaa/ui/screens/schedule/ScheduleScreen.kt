@@ -3,7 +3,6 @@ package noor.serry.rawaa.ui.screens.schedule
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,12 +14,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -28,7 +24,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.graphics.Brush.Companion.verticalGradient
 import androidx.compose.ui.graphics.Color
@@ -41,14 +36,11 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import noor.serry.designsystem.components.BaseButton
 import org.koin.compose.viewmodel.koinViewModel
-import noor.serry.designsystem.components.Icon
 import noor.serry.designsystem.components.Text
 import noor.serry.designsystem.components.utils.clickAnimation
 import noor.serry.designsystem.design.AppTheme
 import noor.serry.rawaa.BackStackProvider
 import noor.serry.rawaa.R
-import noor.serry.rawaa.ui.navigation.base.AppRoute
-import noor.serry.rawaa.ui.screens.schedule.components.SessionCard
 
 @Composable
 fun ScheduleScreen(
@@ -108,11 +100,8 @@ private fun ScheduleContent(
             ) { session ->
                 SessionCard(
                     item = session,
-                    onViewDetails = {
-                        interactionListener.onViewSessionDetails(session.courseCode)
-                    },
                     modifier = Modifier
-                        .padding(horizontal = 16.dp)
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
                 )
             }
         }
@@ -122,7 +111,7 @@ private fun ScheduleContent(
             item {
             BaseButton(
                 text = "عرض الجدول الأسبوعي الكامل",
-                onClick = interactionListener::onViewFullWeekSchedule,
+                onClick = {},
                 icon = painterResource(R.drawable.ic_calendar), // غير الاسم على حسب الـ drawable عندك
                 backgroundColor = Color.Transparent,
                 textColor = AppTheme.color.primary,

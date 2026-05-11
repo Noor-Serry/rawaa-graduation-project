@@ -48,9 +48,7 @@ fun LoginScreen(
 ) {
     val state by viewModel.state.collectAsState()
 
-    HandleEffects(
-        effects = viewModel.effect,
-    )
+    HandleEffects(effects = viewModel.effect)
 
     LoginContent(state = state, interactionListener = viewModel)
 }
@@ -61,7 +59,8 @@ private fun LoginContent(
     interactionListener: LoginInteractionListener,
 ) {
     Box(
-        modifier = Modifier.background(AppTheme.color.primary)
+        modifier = Modifier
+            .background(AppTheme.color.primary)
             .statusBarsPadding()
             .fillMaxSize()
             .background(AppTheme.color.bg)
@@ -97,6 +96,7 @@ private fun LoginContent(
                 )
             }
 
+            // ── Role selector ────────────────────────────────────────────────
             Column(Modifier.fillMaxWidth().padding(top = 32.dp)) {
                 Text(
                     stringResource(R.string.login_as),
@@ -104,7 +104,9 @@ private fun LoginContent(
                     style = AppTheme.textStyle.body.small
                 )
                 Row(
-                    Modifier.fillMaxWidth().padding(top = 10.dp),
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(top = 10.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     LoginRole.entries.forEach { role ->
@@ -117,6 +119,7 @@ private fun LoginContent(
                 }
             }
 
+            // ── Email ────────────────────────────────────────────────────────
             LabelInputField(
                 text = state.email,
                 onValueChange = interactionListener::onEmailChange,
@@ -128,6 +131,7 @@ private fun LoginContent(
                 errorMessage = state.emailError,
             )
 
+            // ── Password ─────────────────────────────────────────────────────
             LabelInputField(
                 text = state.password,
                 onValueChange = interactionListener::onPasswordChange,
@@ -140,17 +144,21 @@ private fun LoginContent(
                 errorMessage = state.passwordError,
             )
 
-            LabelInputField(
-                text = state.universitySlug,
-                onValueChange = interactionListener::onUniversitySlugChange,
-                hintText = "رمز الجامعة",
-                label = "رمز الجامعة",
-                icon = painterResource(noor.serry.designsystem.R.drawable.mail),
-                modifier = Modifier.padding(top = 16.dp),
-                isError = state.slugError != null,
-                errorMessage = state.slugError,
-            )
+            // ── University slug (hidden for SuperAdmin) ───────────────────────
+            if (state.selectedRole != LoginRole.ADMIN) {
+                LabelInputField(
+                    text = state.universitySlug,
+                    onValueChange = interactionListener::onUniversitySlugChange,
+                    hintText = "رمز الجامعة",
+                    label = "رمز الجامعة",
+                    icon = painterResource(noor.serry.designsystem.R.drawable.mail),
+                    modifier = Modifier.padding(top = 16.dp),
+                    isError = state.slugError != null,
+                    errorMessage = state.slugError,
+                )
+            }
 
+            // ── General error ─────────────────────────────────────────────────
             state.generalError?.let {
                 Text(
                     text = it,
@@ -160,12 +168,15 @@ private fun LoginContent(
                 )
             }
 
+            // ── Forgot password + Login button ────────────────────────────────
             Column(Modifier.fillMaxWidth()) {
                 Text(
                     text = stringResource(R.string.forgot_password),
                     color = AppTheme.color.primary,
                     style = AppTheme.textStyle.body.small,
-                    modifier = Modifier.padding(top = 18.dp).align(Alignment.End),
+                    modifier = Modifier
+                        .padding(top = 18.dp)
+                        .align(Alignment.End),
                 )
                 BaseButton(
                     text = if (state.isLoading) "..." else stringResource(R.string.login),
@@ -175,15 +186,35 @@ private fun LoginContent(
                 )
             }
 
+            // ── Divider ───────────────────────────────────────────────────────
             Row(
-                modifier = Modifier.fillMaxWidth().padding(top = 24.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 24.dp),
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Spacer(Modifier.height(1.dp).weight(1f).align(Alignment.CenterVertically).background(AppTheme.color.border))
-                Text(text = stringResource(R.string.or), color = AppTheme.color.textSecondary, style = AppTheme.textStyle.body.small.copy(fontWeight = FontWeight.Normal))
-                Spacer(Modifier.height(1.dp).weight(1f).align(Alignment.CenterVertically).background(AppTheme.color.border))
+                Spacer(
+                    Modifier
+                        .height(1.dp)
+                        .weight(1f)
+                        .align(Alignment.CenterVertically)
+                        .background(AppTheme.color.border)
+                )
+                Text(
+                    text = stringResource(R.string.or),
+                    color = AppTheme.color.textSecondary,
+                    style = AppTheme.textStyle.body.small.copy(fontWeight = FontWeight.Normal)
+                )
+                Spacer(
+                    Modifier
+                        .height(1.dp)
+                        .weight(1f)
+                        .align(Alignment.CenterVertically)
+                        .background(AppTheme.color.border)
+                )
             }
 
+            // ── Google login ──────────────────────────────────────────────────
             BaseButton(
                 text = stringResource(R.string.login_with_google),
                 onClick = interactionListener::onGoogleLoginClick,
@@ -209,22 +240,28 @@ private fun LoginContent(
 }
 
 @Composable
-private fun HandleEffects(
-    effects: Flow<LoginEffect>
-) {
+private fun HandleEffects(effects: Flow<LoginEffect>) {
     val backStack = BackStackProvider.current
     LaunchedEffect(Unit) {
         effects.collectLatest { effect ->
             when (effect) {
-                LoginEffect.NavigateToStudentHome    -> {
+                LoginEffect.NavigateToStudentHome -> {
                     backStack.clear()
                     backStack.add(AppRoute.StudentEntry)
                 }
-                LoginEffect.NavigateToTeacherHome    -> {
+                LoginEffect.NavigateToTeacherHome -> {
                     backStack.clear()
                     backStack.add(AppRoute.TeacherEntry)
                 }
-                LoginEffect.NavigateToRegister       -> {
+                LoginEffect.NavigateToAdminHome -> {
+                    backStack.clear()
+                    backStack.add(AppRoute.AdminEntry)
+                }
+                LoginEffect.NavigateToSuperAdminHome -> {
+                    backStack.clear()
+                    backStack.add(AppRoute.SuperAdminEntry)
+                }
+                LoginEffect.NavigateToRegister -> {
                     backStack.clear()
                     backStack.add(AppRoute.Register)
                 }

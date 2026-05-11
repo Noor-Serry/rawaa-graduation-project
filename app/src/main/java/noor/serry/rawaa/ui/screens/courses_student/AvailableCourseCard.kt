@@ -110,11 +110,6 @@ fun AvailableCourseCard(
                     tint = AppTheme.color.textSecondary,
                     modifier = Modifier.size(14.dp)
                 )
-                Text(
-                    text = "${item.durationWeeks} أسبوع",
-                    color = AppTheme.color.textSecondary,
-                    style = AppTheme.textStyle.label.medium,
-                )
             }
         }
 

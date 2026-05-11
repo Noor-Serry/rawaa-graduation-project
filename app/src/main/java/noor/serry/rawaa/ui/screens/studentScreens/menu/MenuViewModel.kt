@@ -7,30 +7,64 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import noor.serry.rawaa.data.repository.AuthRepositoryImpl
+import noor.serry.rawaa.data.local.TokenDataStore
+import noor.serry.rawaa.data.repository.UniversityRepository
 import noor.serry.rawaa.ui.base.DispatcherProvider
 
 class MenuViewModel(
-    private val authRepository: AuthRepositoryImpl,
+    private val repository: UniversityRepository,
+    private val tokenDataStore: TokenDataStore,
     val dispatchers: DispatcherProvider,
-) : ViewModel() {
+) : ViewModel(), MenuInteractionListener {
 
     private val _uiState = MutableStateFlow(MenuUiState())
     val uiState: StateFlow<MenuUiState> = _uiState.asStateFlow()
 
-    fun logout() {
+    init { loadUser() }
+
+    /**
+     * Loads the logged-in user's name and role from the server (GET /api/auth/me).
+     * Previously MenuUiState.userName / userRole / userInitial were never populated
+     * from the server — they stayed empty. Now they are filled from UserDto.
+     */
+    private fun loadUser() {
         viewModelScope.launch(dispatchers.IO) {
-            _uiState.update { it.copy(isLoggingOut = true) }
             try {
-                authRepository.logout()
-                _uiState.update { it.copy(loggedOut = true, isLoggingOut = false) }
-            } catch (e: Exception) {
-                _uiState.update { it.copy(errorMessage = e.message, isLoggingOut = false) }
-            }
+                val user = repository.getMe().data ?: return@launch
+                val roleLabel = when (user.role) {
+                    "student"  -> "طالب"
+                    "doctor"   -> "دكتور"
+                    "employee" -> "موظف"
+                    "admin"    -> "مشرف"
+                    else       -> user.role
+                }
+                val departmentName = user.profile?.departmentName ?: ""
+                _uiState.update {
+                    it.copy(
+                        userName    = user.name,
+                        userRole    = if (departmentName.isNotBlank()) "$roleLabel · $departmentName" else roleLabel,
+                        userInitial = user.name.trim().firstOrNull()?.toString() ?: "",
+                    )
+                }
+            } catch (_: Exception) { /* keep defaults */ }
         }
     }
 
-    fun onMenuToggle() {
-        _uiState.update { it.copy(isOpen = !it.isOpen) }
+    override fun onLogoutClick() {
+        viewModelScope.launch(dispatchers.IO) {
+            _uiState.update { it.copy(isLoggingOut = true) }
+            try {
+                repository.logout()
+            } catch (_: Exception) { /* ignored — clear local regardless */ }
+            tokenDataStore.clearAll()
+            _uiState.update { it.copy(loggedOut = true, isLoggingOut = false) }
+        }
     }
+
+    override fun onMenuToggle() = _uiState.update { it.copy(isOpen = !it.isOpen) }
+
+    // Static menu items — these navigate to in-app screens, not server data
+    override fun onSettingsClick()      = Unit  // TODO: navigate to settings
+    override fun onHelpAndSupportClick()= Unit  // TODO: navigate to help
+    override fun onPrivacyPolicyClick() = Unit  // TODO: navigate to privacy policy
 }

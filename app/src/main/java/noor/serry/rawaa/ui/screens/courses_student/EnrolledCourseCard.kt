@@ -35,19 +35,33 @@ import noor.serry.designsystem.components.utils.ignoreHorizontalParentPadding
 import noor.serry.designsystem.design.AppTheme
 import noor.serry.rawaa.R
 
+/**
+ * Card for an enrolled course.
+ *
+ * Removed action buttons:
+ *   • "محاضرات" (Lectures)  — no /lectures endpoint on the server
+ *   • "واجبات"  (Homework)  — no /homework endpoint on the server
+ *   • "المواد"  (Materials) — no /materials endpoint on the server
+ *
+ * Removed metadata rows:
+ *   • studentCount    — StudentCourseDto has no enrolled_count field
+ *   • nextSessionTime — no endpoint returns the next session time per enrolled course
+ *
+ * Kept metadata rows (backed by StudentCourseDto):
+ *   • creditHours — StudentCourseDto.credit_hours
+ *   • semester    — StudentCourseDto.semester
+ */
 @Composable
 fun EnrolledCourseCard(
     item: EnrolledCourseItem,
-    onOpenCourse: () -> Unit,
-    onLecturesClick: () -> Unit,
-    onHomeworkClick: () -> Unit,
-    onMaterialsClick: () -> Unit,
     modifier: Modifier = Modifier,
+    // Removed: onLecturesClick, onHomeworkClick, onMaterialsClick — no server endpoints
 ) {
     var started by remember { mutableStateOf(false) }
     val animatedProgress by animateFloatAsState(
         targetValue = if (started) item.progressPercent / 100f else 0f,
-        animationSpec = tween(durationMillis = 800)
+        animationSpec = tween(durationMillis = 800),
+        label = "progress"
     )
     LaunchedEffect(Unit) { started = true }
 
@@ -59,7 +73,7 @@ fun EnrolledCourseCard(
             .border(1.17.dp, AppTheme.color.border, RoundedCornerShape(16.dp))
             .padding(16.dp)
     ) {
-        // Course code + name + icon row
+        // ── Course icon + name + code ─────────────────────────────
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -69,13 +83,16 @@ fun EnrolledCourseCard(
                 modifier = Modifier
                     .size(48.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(AppTheme.color.primary.copy(alpha = .125f)),
+                    .background(
+                        if (item.isYellowIcon) Color(0x33FACC15)
+                        else AppTheme.color.primary.copy(alpha = .125f)
+                    ),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     painter = painterResource(R.drawable.ic_book),
                     contentDescription = null,
-                    tint = AppTheme.color.primary,
+                    tint = if (item.isYellowIcon) Color(0xFFF59E0B) else AppTheme.color.primary,
                     modifier = Modifier.size(24.dp)
                 )
             }
@@ -99,166 +116,91 @@ fun EnrolledCourseCard(
                 modifier = Modifier
                     .background(AppTheme.color.bgHover, RoundedCornerShape(8.dp))
                     .padding(horizontal = 8.dp, vertical = 4.dp)
-
             )
         }
 
-        // Progress label row
+        // ── Progress bar ──────────────────────────────────────────
+        Column(modifier = Modifier.padding(top = 12.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Text(
+                    text = "التقدم",
+                    color = AppTheme.color.textSecondary,
+                    style = AppTheme.textStyle.label.medium,
+                )
+                Text(
+                    text = "${item.progressPercent}%",
+                    color = AppTheme.color.primary,
+                    style = AppTheme.textStyle.label.medium.copy(fontWeight = FontWeight.Bold),
+                )
+            }
+            Box(
+                modifier = Modifier
+                    .padding(top = 4.dp)
+                    .ignoreHorizontalParentPadding(16.dp)
+                    .fillMaxWidth()
+                    .height(6.dp)
+                    .clip(CircleShape)
+                    .background(AppTheme.color.bgHover)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(animatedProgress)
+                        .height(6.dp)
+                        .clip(CircleShape)
+                        .background(AppTheme.color.primary)
+                )
+            }
+        }
+
+        // ── Metadata row — credit hours + semester ────────────────
+        // Both fields come from StudentCourseDto; nextSessionTime and
+        // studentCount are absent from StudentCourseDto so they are removed.
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 12.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                text = "التقدم",
-                color = AppTheme.color.textSecondary,
-                style = AppTheme.textStyle.label.large.copy(fontWeight = FontWeight.Normal),
-            )
-
-            Text(
-                text = "${item.progressPercent}%",
-                color = AppTheme.color.primary,
-                style = AppTheme.textStyle.label.large.copy(fontWeight = FontWeight.Bold),
-            )
-        }
-
-        // Progress bar
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 8.dp)
-                .height(8.dp)
-                .clip(CircleShape)
-                .background(Color(0xFFF1F5F9))
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth(animatedProgress)
-                    .height(8.dp)
-                    .clip(CircleShape)
-                    .background(AppTheme.color.primary)
-            )
-        }
-
-
-        // ── Meta row: students + next session + open link ─────────
-        Row(
-            modifier = Modifier.padding(top = 17.dp)
-                .ignoreHorizontalParentPadding(16.dp)
-                .border(1.17.dp, AppTheme.color.border)
-                .fillMaxWidth()
-                .background(AppTheme.color.bgHover)
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Students
+            // StudentCourseDto.credit_hours
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Icon(
-                    painter = painterResource(R.drawable.ic_person),
+                    painter = painterResource(R.drawable.ic_book),
                     contentDescription = null,
                     tint = AppTheme.color.textSecondary,
                     modifier = Modifier.size(16.dp)
                 )
                 Text(
-                    text = "${item.studentCount}",
+                    text = "${item.creditHours} ساعة",
                     color = AppTheme.color.textSecondary,
                     style = AppTheme.textStyle.body.small.copy(fontWeight = FontWeight.Normal)
                 )
             }
-            // Next session time
-            Row(modifier = Modifier.weight(1f),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_clock),
-                    contentDescription = null,
-                    tint = AppTheme.color.textSecondary,
-                    modifier = Modifier.size(16.dp)
-                )
-                Text(
-                    text = item.nextSessionTime,
-                    color = AppTheme.color.textSecondary,
-                    style = AppTheme.textStyle.body.small.copy(fontWeight = FontWeight.Normal)
-                )
-            }
-            // Open course link
-            Row(
-                modifier = Modifier.clickAnimation { onOpenCourse() },
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Text(
-                    text = "فتح المقرر",
-                    color = AppTheme.color.primary,
-                    style = AppTheme.textStyle.body.small,
-                )
-                Icon(
-                    painter = painterResource(R.drawable.chevronleft),
-                    contentDescription = null,
-                    tint = AppTheme.color.primary,
-                    modifier = Modifier.size(16.dp)
-                )
+            // StudentCourseDto.semester
+            if (item.semester.isNotBlank()) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_calendar),
+                        contentDescription = null,
+                        tint = AppTheme.color.textSecondary,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Text(
+                        text = item.semester,
+                        color = AppTheme.color.textSecondary,
+                        style = AppTheme.textStyle.body.small.copy(fontWeight = FontWeight.Normal)
+                    )
+                }
             }
         }
-
-        // ── Action buttons row ────────────────────────────────────
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            CourseActionButton(
-                label = "محاضرات",
-                iconRes = R.drawable.play,
-                onClick = onLecturesClick,
-                modifier = Modifier.weight(1f)
-            )
-            CourseActionButton(
-                label = "واجبات",
-                iconRes = R.drawable.ic_document,
-                onClick = onHomeworkClick,
-                modifier = Modifier.weight(1f)
-            )
-            CourseActionButton(
-                label = "المواد",
-                iconRes = R.drawable.download,
-                onClick = onMaterialsClick,
-                modifier = Modifier.weight(1f)
-            )
-        }
-    }
-}
-
-@Composable
-private fun CourseActionButton(
-    label: String,
-    iconRes: Int,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier = modifier.clickAnimation { onClick() },
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        Icon(
-            painter = painterResource(iconRes),
-            contentDescription = label,
-            tint = AppTheme.color.primaryDark,
-            modifier = Modifier.size(20.dp)
-        )
-        Text(
-            text = label,
-            color = AppTheme.color.textSecondary,
-            style = AppTheme.textStyle.label.medium,
-        )
     }
 }

@@ -1,15 +1,15 @@
 package noor.serry.rawaa.ui
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import noor.serry.rawaa.data.local.TokenDataStore
-import noor.serry.rawaa.data.repository.AppSettingsRepository
 
 /**
  * App-level ViewModel that determines which root destination to show
@@ -17,17 +17,13 @@ import noor.serry.rawaa.data.repository.AppSettingsRepository
  *
  * Decision tree (evaluated once, on startup):
  *
- *   isOnboardingSeen == false  →  [MainUiState.ShowOnboarding]
- *   isOnboardingSeen == true
- *     && isLoggedIn == true    →  [MainUiState.ShowMain(role)]
- *     && isLoggedIn == false   →  [MainUiState.ShowAuth]
- *
- * Injected via Koin as a *single* instance so [MainActivity] and the root
- * composable share the exact same state object.
+ *   onboardingSeen == false  →  [MainUiState.ShowOnboarding]
+ *   onboardingSeen == true
+ *     && token != null       →  [MainUiState.ShowMain(role)]
+ *     && token == null       →  [MainUiState.ShowAuth]
  */
 class MainViewModel(
-    private val appSettings: AppSettingsRepository,
-    private val tokenDataStore: TokenDataStore
+    private val tokenDataStore: TokenDataStore,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<MainUiState>(MainUiState.Loading)
@@ -37,39 +33,25 @@ class MainViewModel(
         resolveStartDestination()
     }
 
-    // ── Startup resolution ────────────────────────────────────────────────────
-
     private fun resolveStartDestination() {
         viewModelScope.launch {
-            val onboardingSeen = appSettings.isOnboardingSeen.first()
+            val onboardingSeen = tokenDataStore.isOnboardingSeen()
+            val token = tokenDataStore.getToken()
 
             _uiState.value = when {
                 !onboardingSeen -> MainUiState.ShowOnboarding
-
-                appSettings.isLoggedIn() -> {
-                    Log.e("MainViewModel.kt", ""+tokenDataStore.getToken())
-                    val role = appSettings.getSavedRole() ?: "student"
+                token != null -> {
+                    val role = tokenDataStore.getRole() ?: "student"
                     MainUiState.ShowMain(role)
                 }
-
                 else -> MainUiState.ShowAuth
             }
         }
     }
 
-    // ── Called by OnboardingViewModel when onboarding finishes ────────────────
-
-    /**
-     * Persists the "onboarding seen" flag and then re-evaluates the start
-     * destination so the root composable transitions to [MainUiState.ShowAuth].
-     *
-     * This is the ONLY place [AppSettingsRepository.markOnboardingAsSeen] is
-     * called so the flag is set exactly once.
-     */
     fun onOnboardingCompleted() {
         viewModelScope.launch {
-            appSettings.markOnboardingAsSeen()
-            // After marking, the user is definitely not logged in yet.
+            tokenDataStore.markOnboardingSeen()
             _uiState.value = MainUiState.ShowAuth
         }
     }

@@ -59,12 +59,23 @@ class TokenDataStore(private val dataStore: DataStore<Preferences>) {
             prefs.remove(KEY_TOKEN)
             prefs.remove(KEY_SLUG)
             prefs.remove(KEY_ROLE)
+            prefs.remove(KEY_ONBOARDING_SEEN)
         }
     }
 
+    // ── Onboarding ────────────────────────────────────────────────────────────
+
+    suspend fun isOnboardingSeen(): Boolean =
+        dataStore.data.map { it[KEY_ONBOARDING_SEEN] ?: false }.firstOrNull() ?: false
+
+    suspend fun markOnboardingSeen() {
+        dataStore.edit { it[KEY_ONBOARDING_SEEN] = true }
+    }
+
     companion object {
-        private val KEY_TOKEN = stringPreferencesKey("auth_token")
-        private val KEY_SLUG  = stringPreferencesKey("university_slug")
-        private val KEY_ROLE  = stringPreferencesKey("user_role")
+        private val KEY_TOKEN           = stringPreferencesKey("auth_token")
+        private val KEY_SLUG            = stringPreferencesKey("university_slug")
+        private val KEY_ROLE            = stringPreferencesKey("user_role")
+        private val KEY_ONBOARDING_SEEN = androidx.datastore.preferences.core.booleanPreferencesKey("onboarding_seen")
     }
 }

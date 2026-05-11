@@ -1,23 +1,23 @@
 package noor.serry.rawaa.ui.screens.onboarding
 
-
-import noor.serry.rawaa.data.repository.AppSettingsRepository
+import noor.serry.rawaa.data.local.TokenDataStore
 import noor.serry.rawaa.ui.base.BaseViewModel
 import noor.serry.rawaa.ui.base.DispatcherProvider
 
 class OnboardingViewModel(
     dispatchers: DispatcherProvider,
-    private val appSettings: AppSettingsRepository,
-    ) : BaseViewModel<OnboardingUiState, OnboardingEffect>(
+    private val tokenDataStore: TokenDataStore,
+) : BaseViewModel<OnboardingUiState, OnboardingEffect>(
     initialState = OnboardingUiState(),
     dispatcherProvider = dispatchers,
-) ,OnboardingInteractionListener{
+), OnboardingInteractionListener {
 
     init {
         tryToExecute(
-            action = {appSettings.markOnboardingAsSeen()}
+            action = { tokenDataStore.markOnboardingSeen() }
         )
     }
+
     override fun onSkipClick() {
         sendNewNavigationEffect(OnboardingEffect.NavigateToRegister)
     }

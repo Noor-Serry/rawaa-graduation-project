@@ -1,37 +1,33 @@
 package noor.serry.rawaa.ui.screens.notifications
 
-import noor.serry.rawaa.domain.entity.NotificationEntity
-import noor.serry.rawaa.domain.entity.NotificationType as DomainNotificationType
-import noor.serry.rawaa.domain.usecase.DeleteAllNotificationsUseCase
-import noor.serry.rawaa.domain.usecase.GetNotificationsUseCase
-import noor.serry.rawaa.domain.usecase.MarkAllNotificationsReadUseCase
+import noor.serry.rawaa.data.dto.NotificationDto
+import noor.serry.rawaa.data.repository.UniversityRepository
 import noor.serry.rawaa.ui.base.BaseViewModel
 import noor.serry.rawaa.ui.base.DispatcherProvider
 
 class NotificationsViewModel(
-    private val getNotifications: GetNotificationsUseCase,
-    private val markAllRead: MarkAllNotificationsReadUseCase,
-    private val deleteAll: DeleteAllNotificationsUseCase,
+    private val repository: UniversityRepository,
     private val dispatchers: DispatcherProvider,
 ) : BaseViewModel<NotificationsUiState, NotificationsEffect>(
     initialState = NotificationsUiState(isLoading = true),
     dispatcherProvider = dispatchers,
-) ,NotificationsInteractionListener{
+), NotificationsInteractionListener {
 
     init { load() }
 
     fun load() {
         updateState { it.copy(isLoading = true, errorMessage = null) }
         tryToExecute(
-            action = { getNotifications() },
+            // GET /api/notifications  → NotificationsResponseDto (data: List<NotificationDto>)
+            action = { repository.getNotifications().data ?: emptyList() },
             onSuccess = { list ->
                 val items = list.map { it.toNotificationItem() }
                 updateState {
                     it.copy(
-                        isLoading = false,
+                        isLoading   = false,
                         notifications = items,
                         unreadCount = items.count { n -> !n.isRead },
-                        todayCount = items.size,
+                        todayCount  = items.size,
                     )
                 }
             },
@@ -41,44 +37,54 @@ class NotificationsViewModel(
     }
 
     override fun onTabSelected(tab: NotificationsTab) = updateState { it.copy(selectedTab = tab) }
-    override fun onMarkAllAsRead() {
-        TODO("Not yet implemented")
-    }
 
+    override fun onMarkAllAsRead() = markAllAsRead()
+
+    /**
+     * "Delete all" — the server has no bulk-delete endpoint (/api/notifications/delete-all
+     * does not exist). We delete each notification individually via DELETE /api/notifications/{id},
+     * then reload. For large lists this could be slow; a local clear is applied immediately
+     * as optimistic UI.
+     */
     override fun onDeleteAll() {
-        TODO("Not yet implemented")
+        val ids = state.value.notifications.map { it.id }
+        // Optimistic clear
+        updateState { it.copy(notifications = emptyList(), unreadCount = 0, todayCount = 0) }
+        ids.forEach { id ->
+            tryToExecute(
+                action = { repository.deleteNotification(id.toInt()) },
+                onSuccess = { /* individual deletes, no reload needed */ },
+                dispatcher = dispatchers.IO,
+            )
+        }
     }
 
     override fun onMarkAsRead(notificationId: String) {
-        TODO("Not yet implemented")
-    }
-
-    override fun onViewDetails(notificationId: String) {
-        TODO("Not yet implemented")
-    }
-
-    override fun onToggleFilter(type: NotificationType) {
-        TODO("Not yet implemented")
-    }
-
-    fun onFilterToggled(type: NotificationType) = updateState {
-        val current = it.activeFilters.toMutableSet()
-        if (!current.add(type)) current.remove(type)
-        it.copy(activeFilters = current)
-    }
-
-    fun markAllAsRead() {
+        // PUT /api/notifications/{id}/read
         tryToExecute(
-            action = { markAllRead() },
+            action    = { repository.markNotificationRead(notificationId.toInt()) },
             onSuccess = { load() },
             dispatcher = dispatchers.IO,
         )
     }
 
-    fun deleteAllNotifications() {
+    override fun onViewDetails(notificationId: String) {
+        sendNewEffect(NotificationsEffect.NavigateToDetails(notificationId))
+    }
+
+    override fun onToggleFilter(type: NotificationType) {
+        updateState {
+            val current = it.activeFilters.toMutableSet()
+            if (!current.add(type)) current.remove(type)
+            it.copy(activeFilters = current)
+        }
+    }
+
+    fun markAllAsRead() {
+        // PUT /api/notifications/read-all
         tryToExecute(
-            action = { deleteAll() },
-            onSuccess = { updateState { it.copy(notifications = emptyList(), unreadCount = 0, todayCount = 0) } },
+            action     = { repository.markAllNotificationsRead() },
+            onSuccess  = { load() },
             dispatcher = dispatchers.IO,
         )
     }
@@ -86,17 +92,25 @@ class NotificationsViewModel(
     fun onNotificationClick(id: String) = sendNewEffect(NotificationsEffect.NavigateToDetails(id))
 }
 
-private fun NotificationEntity.toNotificationItem() = NotificationItem(
-    id = id,
-    title = title,
-    body = body,
-    timeAgo = timeAgo,
-    type = when (type) {
-        DomainNotificationType.GRADE        -> NotificationType.GRADE
-        DomainNotificationType.ASSIGNMENT   -> NotificationType.HOMEWORK
-        DomainNotificationType.EXAM         -> NotificationType.EXAM
-        DomainNotificationType.ANNOUNCEMENT -> NotificationType.ANNOUNCEMENT
-        DomainNotificationType.DEADLINE     -> NotificationType.HOMEWORK
+// ── Mapper ────────────────────────────────────────────────────────────────────
+
+/**
+ * Maps NotificationDto.type (server string) to NotificationType enum.
+ *
+ * Server type values: "grade", "assignment", "exam", "announcement"
+ * Note: enum was renamed HOMEWORK → ASSIGNMENT to match the server type "assignment".
+ */
+private fun NotificationDto.toNotificationItem() = NotificationItem(
+    id      = id.toString(),
+    title   = title,
+    body    = body,
+    timeAgo = createdAt ?: "",
+    type    = when (type.lowercase()) {
+        "grade"        -> NotificationType.GRADE
+        "assignment"   -> NotificationType.ASSIGNMENT
+        "exam"         -> NotificationType.EXAM
+        "announcement" -> NotificationType.ANNOUNCEMENT
+        else           -> NotificationType.ANNOUNCEMENT
     },
-    isRead = isRead,
+    isRead = isRead == 1,
 )

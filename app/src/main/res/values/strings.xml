@@ -110,4 +110,12 @@
     <string name="version_info">الإصدار 1.0.0</string>
     <string name="nav_assessment">التقييم</string>
     <string name="nav_students">الطلاب</string>
+
+    <!-- ── New navigation tab labels (Admin & SuperAdmin) ── -->
+    <string name="nav_departments">الأقسام</string>
+    <string name="nav_employees">الموظفون</string>
+    <string name="nav_reports">التقارير</string>
+    <string name="nav_universities">الجامعات</string>
+    <string name="show_message_enrolled_successfully">تم التسجيل في الماده بنجاح</string>
+    <string name="show_message_enrolled_error">فشل التسجيل في الماده</string>
 </resources>

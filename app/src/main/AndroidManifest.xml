@@ -2,8 +2,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-feature android:name="android.hardware.usb.host" android:required="true"/>
 <uses-permission android:name="android.permission.INTERNET"/>
-    <!-- USB permission -->
-    <uses-permission android:name="android.permission.USB_PERMISSION"/>
 
     <!-- Read PDF from storage -->
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
@@ -19,6 +17,7 @@
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
+        android:usesCleartextTraffic="true"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:name=".App"
@@ -36,8 +35,6 @@
             </intent-filter>
         </activity>
 
-        <receiver android:name=".UsbReceiver"
-            android:exported="false" />
     </application>
 
 </manifest>
