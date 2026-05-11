@@ -1,5 +1,6 @@
 package noor.serry.rawaa.ui.screens.profile_student
 
+import noor.serry.rawaa.data.dto.DepartmentDto
 import noor.serry.rawaa.data.dto.StudentDashboardDto
 import noor.serry.rawaa.data.dto.UserDto
 import noor.serry.rawaa.data.repository.UniversityRepository
@@ -22,11 +23,16 @@ class ProfileViewModel(
             action = {
                 val me        = repository.getMe().data
                 val dashboard = repository.getStudentDashboard().data
-                me to dashboard
+
+                // Use the department_id from profile to fetch the full department (incl. name)
+                val departmentId = me?.profile?.departmentId
+                val department   = departmentId?.let { repository.getDepartment(it).data }
+
+                Triple(me, dashboard, department)
             },
-            onSuccess = { (user, dashboard) ->
+            onSuccess = { (user, dashboard, department) ->
                 if (user != null) {
-                    updateState { user.toProfileUiState(dashboard) }
+                    updateState { user.toProfileUiState(dashboard, department) }
                 } else {
                     updateState { it.copy(isLoading = false) }
                 }
@@ -61,14 +67,15 @@ class ProfileViewModel(
         updateState { it.copy(isSaving = true) }
         tryToExecute(
             action = {
+                val nameChanged  = s.editName.isNotBlank() && s.editName != s.fullName
+                val phoneChanged = s.editPhone != s.phone
+                val emailChanged = s.editEmail.isNotBlank() && s.editEmail != s.email
+
                 // 1. Update name via /api/auth/profile
-                val nameChanged = s.editName.isNotBlank() && s.editName != s.fullName
                 if (nameChanged) {
                     repository.updateProfile(name = s.editName)
                 }
                 // 2. Update phone / email via /api/students/{id}
-                val phoneChanged = s.editPhone != s.phone
-                val emailChanged = s.editEmail.isNotBlank() && s.editEmail != s.email
                 if (phoneChanged || emailChanged) {
                     repository.updateStudent(
                         id    = s.userId,
@@ -78,14 +85,16 @@ class ProfileViewModel(
                 }
             },
             onSuccess = {
-                updateState { it.copy(
-                    isSaving    = false,
-                    isEditMode  = false,
-                    saveSuccess = true,
-                    fullName    = if (s.editName.isNotBlank()) s.editName else it.fullName,
-                    phone       = s.editPhone,
-                    email       = if (s.editEmail.isNotBlank()) s.editEmail else it.email,
-                ) }
+                updateState {
+                    it.copy(
+                        isSaving    = false,
+                        isEditMode  = false,
+                        saveSuccess = true,
+                        fullName    = if (s.editName.isNotBlank()) s.editName else it.fullName,
+                        phone       = s.editPhone,
+                        email       = if (s.editEmail.isNotBlank()) s.editEmail else it.email,
+                    )
+                }
                 sendNewEffect(ProfileEffect.ShowSaveSuccess)
             },
             onError = { e ->
@@ -97,24 +106,48 @@ class ProfileViewModel(
     }
 
     override fun onChangeAvatarClick() = sendNewEffect(ProfileEffect.OpenImagePicker)
+
+    /** Called from the screen after the user picks an image URI. */
+    fun onAvatarSelected(avatarUrl: String) {
+        tryToExecute(
+            action = { repository.updateProfile(avatar = avatarUrl) },
+            onSuccess = { response ->
+                val newUrl = response.data?.avatar ?: avatarUrl
+                updateState { it.copy(avatarUrl = newUrl) }
+                sendNewEffect(ProfileEffect.ShowSaveSuccess)
+            },
+            onError = { e ->
+                sendNewEffect(ProfileEffect.ShowError(e.message ?: "فشل تحديث الصورة"))
+            },
+            dispatcher = dispatchers.IO,
+        )
+    }
 }
 
-// ── Mapper ─────────────────────────────────────────────────────────────────────
+// ── Mapper ────────────────────────────────────────────────────────────────────
 
-fun UserDto.toProfileUiState(dashboard: StudentDashboardDto?) = ProfileUiState(
+fun UserDto.toProfileUiState(
+    dashboard: StudentDashboardDto?,
+    department: DepartmentDto?,
+) = ProfileUiState(
     isLoading        = false,
     userId           = id,
     fullName         = name,
     studentId        = profile?.nationalId ?: id.toString(),
     avatarUrl        = avatar,
+
     studyYears       = profile?.enrollmentYear?.let {
-        java.util.Calendar.getInstance().get(java.util.Calendar.YEAR) - it
+        java.util.Calendar.getInstance().get(java.util.Calendar.YEAR) - it.toInt()
     } ?: 0,
     completedCourses = dashboard?.courses?.count { it.status == "completed" } ?: 0,
     creditHours      = dashboard?.creditHours ?: 0,
     attendanceRate   = dashboard?.attendance?.attendanceRate ?: 0f,
+
     gpa              = profile?.gpa ?: dashboard?.gpa ?: "0.00",
-    faculty          = profile?.departmentName ?: "",
+
+    // Department name comes from the dedicated getDepartment() call
+    faculty          = department?.name ?: "",
+
     level            = profile?.level?.toString() ?: "",
     enrollmentDate   = profile?.enrollmentYear?.toString() ?: "",
     email            = email,

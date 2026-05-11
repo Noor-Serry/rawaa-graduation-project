@@ -2,6 +2,7 @@ package noor.serry.rawaa.ui.screens.studentScreens.menu
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,7 +26,16 @@ class MenuViewModel(
     private fun loadUser() {
         viewModelScope.launch(dispatchers.IO) {
             try {
-                val user = repository.getMe().data ?: return@launch
+                // Run both calls in parallel
+                val userDeferred          = async { repository.getMe().data }
+                val notificationsDeferred = async {
+                    try { repository.getNotifications(perPage = 1).unreadCount }
+                    catch (_: Exception) { 0 }
+                }
+
+                val user          = userDeferred.await() ?: return@launch
+                val unreadCount   = notificationsDeferred.await()
+
                 val roleLabel = when (user.role) {
                     "student"  -> "طالب"
                     "doctor"   -> "دكتور"
@@ -34,14 +44,26 @@ class MenuViewModel(
                     else       -> user.role
                 }
                 val departmentName = user.profile?.departmentName ?: ""
+
                 _uiState.update {
                     it.copy(
-                        userName    = user.name,
-                        userRole    = if (departmentName.isNotBlank()) "$roleLabel · $departmentName" else roleLabel,
-                        userInitial = user.name.trim().firstOrNull()?.toString() ?: "",
+                        userName                 = user.name,
+                        userRole                 = if (departmentName.isNotBlank()) "$roleLabel · $departmentName" else roleLabel,
+                        userInitial              = user.name.trim().firstOrNull()?.toString() ?: "",
+                        unreadNotificationCount  = unreadCount,
                     )
                 }
             } catch (_: Exception) { /* keep defaults */ }
+        }
+    }
+
+    /** Call this after the user reads notifications to refresh the badge. */
+    fun refreshNotificationCount() {
+        viewModelScope.launch(dispatchers.IO) {
+            try {
+                val count = repository.getNotifications(perPage = 1).unreadCount
+                _uiState.update { it.copy(unreadNotificationCount = count) }
+            } catch (_: Exception) { /* keep current count */ }
         }
     }
 
@@ -56,8 +78,8 @@ class MenuViewModel(
         }
     }
 
-    override fun onMenuToggle()   = _uiState.update { it.copy(isOpen = !it.isOpen) }
-    override fun onMenuDismiss()  = _uiState.update { it.copy(isOpen = false) }
+    override fun onMenuToggle()  = _uiState.update { it.copy(isOpen = !it.isOpen) }
+    override fun onMenuDismiss() = _uiState.update { it.copy(isOpen = false) }
 
     override fun onSettingsClick()       = Unit  // TODO: navigate to settings
     override fun onHelpAndSupportClick() = Unit  // TODO: navigate to help

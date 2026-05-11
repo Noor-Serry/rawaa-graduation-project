@@ -9,4 +9,5 @@ data class MenuUiState(
     val isLoggingOut: Boolean = false,
     val loggedOut: Boolean = false,
     val errorMessage: String? = null,
+    val unreadNotificationCount: Int = 0,
 )

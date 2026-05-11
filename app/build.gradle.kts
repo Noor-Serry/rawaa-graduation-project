@@ -92,7 +92,9 @@ dependencies {
 
     implementation(libs.androidx.constraintlayout.compose)
 
-
+    // Coil
+    implementation(libs.coil.compose)
+    implementation(libs.coil.network.ktor3)
 }
 
 tasks.register("generateFeature") {

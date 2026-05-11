@@ -622,11 +622,6 @@ private fun InfoRow(label: String, value: String, modifier: Modifier = Modifier)
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment     = Alignment.CenterVertically,
     ) {
-        Text(
-            text  = value.ifBlank { "—" },
-            color = AppTheme.color.text,
-            style = AppTheme.textStyle.body.small.copy(fontWeight = FontWeight.SemiBold),
-        )
         Row(
             verticalAlignment     = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -637,6 +632,11 @@ private fun InfoRow(label: String, value: String, modifier: Modifier = Modifier)
                 style = AppTheme.textStyle.body.small,
             )
         }
+        Text(
+            text  = value.ifBlank { "—" },
+            color = AppTheme.color.text,
+            style = AppTheme.textStyle.body.small.copy(fontWeight = FontWeight.SemiBold),
+        )
     }
 }
 
@@ -647,20 +647,10 @@ private fun ContactRow(label: String, value: String, iconRes: Int, modifier: Mod
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment     = Alignment.CenterVertically,
     ) {
-        Text(
-            text  = value,
-            color = AppTheme.color.text,
-            style = AppTheme.textStyle.body.small.copy(fontWeight = FontWeight.Medium),
-        )
         Row(
             verticalAlignment     = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Text(
-                text  = label,
-                color = AppTheme.color.textSecondary,
-                style = AppTheme.textStyle.body.small,
-            )
             Box(
                 modifier = Modifier
                     .size(32.dp)
@@ -673,7 +663,17 @@ private fun ContactRow(label: String, value: String, iconRes: Int, modifier: Mod
                     modifier = Modifier.size(16.dp),
                 )
             }
+            Text(
+                text  = label,
+                color = AppTheme.color.textSecondary,
+                style = AppTheme.textStyle.body.small,
+            )
         }
+        Text(
+            text  = value,
+            color = AppTheme.color.text,
+            style = AppTheme.textStyle.body.small.copy(fontWeight = FontWeight.Medium),
+        )
     }
 }
 

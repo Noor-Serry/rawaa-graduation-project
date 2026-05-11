@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -49,7 +48,13 @@ fun StudentEntryPoint() {
             // ── Top bar — always visible ───────────────────────────────────
             StudentHeader(
                 state               = menuState,
-                interactionListener = menuViewModel
+                interactionListener = menuViewModel,
+                onNotificationClick = {
+                    // Avoid duplicate entries if already on Notifications
+                    if (backStack.last() != StudentRouteKeys.Notifications) {
+                        backStack.add(StudentRouteKeys.Notifications)
+                    }
+                },
             )
 
             // ── Content area ───────────────────────────────────────────────
