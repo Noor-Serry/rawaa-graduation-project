@@ -1,39 +1,24 @@
 package noor.serry.rawaa.ui.screens.home_teacher
 
+import noor.serry.rawaa.data.dto.CourseDto
+import noor.serry.rawaa.data.dto.ScheduleSessionDto
+import noor.serry.rawaa.data.dto.UpcomingExamDto
+
 data class HomeTeacherUiState(
     val isLoading: Boolean = true,
-    val teacherName: String = "",
-    val pendingTasks: Int = 0,
+    val doctorName: String = "",
     val totalStudents: Int = 0,
-    val activeCourses: Int = 0,
-    val todaySessions: List<TeacherSessionUiModel> = emptyList(),
-    val pendingAssignments: List<TeacherPendingAssignmentUiModel> = emptyList(),
-    val courses: List<TeacherCourseSummaryUiModel> = emptyList(),
-    val weeklySubmissionRate: Int = 0,
-    val weeklyAttendanceRate: Int = 0,
+    val totalCourses: Int = 0,
+    val pendingGrading: Int = 0,
+    val todaySchedule: List<ScheduleSessionDto> = emptyList(),
+    val courses: List<CourseDto> = emptyList(),
+    val upcomingExams: List<UpcomingExamDto> = emptyList(),
+    val error: String? = null,
 )
 
-data class TeacherSessionUiModel(
-    val id: String,
-    val courseName: String,
-    val time: String,
-    val location: String,
-    val studentsCount: Int,
-)
-
-data class TeacherPendingAssignmentUiModel(
-    val id: String,
-    val title: String,
-    val courseName: String,
-    val pendingCount: Int,
-    val deadline: String,
-)
-
-data class TeacherCourseSummaryUiModel(
-    val id: String,
-    val name: String,
-    val averageGrade: Int,
-    val totalAssignments: Int,
-    val totalStudents: Int,
-    val averageProgress: Float,
-)
+sealed interface HomeTeacherEffect {
+    data object NavigateToCourses : HomeTeacherEffect
+    data object NavigateToGrading : HomeTeacherEffect
+    data class NavigateToCourseDetail(val courseId: Int) : HomeTeacherEffect
+    data class ShowError(val message: String) : HomeTeacherEffect
+}

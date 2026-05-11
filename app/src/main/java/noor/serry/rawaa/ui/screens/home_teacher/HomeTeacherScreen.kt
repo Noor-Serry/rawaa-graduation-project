@@ -1,282 +1,475 @@
 package noor.serry.rawaa.ui.screens.home_teacher
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.dropShadow
-import androidx.compose.ui.graphics.Brush.Companion.verticalGradient
-import androidx.compose.ui.graphics.shadow.Shadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collectLatest
-import org.koin.compose.viewmodel.koinViewModel
-import noor.serry.designsystem.components.Icon
-import noor.serry.designsystem.components.Text
-import noor.serry.designsystem.components.utils.clickAnimation
+import androidx.compose.ui.unit.sp
 import noor.serry.designsystem.design.AppTheme
 import noor.serry.rawaa.R
+import noor.serry.rawaa.data.dto.CourseDto
+import noor.serry.rawaa.data.dto.ScheduleSessionDto
+import noor.serry.rawaa.ui.navigation.teatcher.TeacherBackStackProvider
+import noor.serry.rawaa.ui.navigation.teatcher.TeacherRouteKeys
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun HomeTeacherScreen(
-    onNavigateToCourses: () -> Unit = {},
-    onNavigateToStudents: () -> Unit = {},
-    onNavigateToGrading: () -> Unit = {},
-    onNavigateToNotifications: () -> Unit = {},
-    onNavigateToProfile: () -> Unit = {},
     viewModel: HomeTeacherViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
+    val backStack = TeacherBackStackProvider.current
 
-    HandleEffects(
-        effects = viewModel.effect,
-        onNavigateToCourses = onNavigateToCourses,
-        onNavigateToStudents = onNavigateToStudents,
-        onNavigateToGrading = onNavigateToGrading,
-    )
+    LaunchedEffect(Unit) {
+        viewModel.effect.collect { effect ->
+            when (effect) {
+                is HomeTeacherEffect.NavigateToCourses -> backStack.add(TeacherRouteKeys.Courses)
+                is HomeTeacherEffect.NavigateToGrading -> backStack.add(TeacherRouteKeys.Assessment)
+                is HomeTeacherEffect.NavigateToCourseDetail -> backStack.add(TeacherRouteKeys.Courses)
+                is HomeTeacherEffect.ShowError -> { /* show snackbar if needed */ }
+            }
+        }
+    }
 
-    HomeTeacherContent(state = state, interactionListener = viewModel)
-}
+    if (state.isLoading) {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator(color = AppTheme.color.primary)
+        }
+        return
+    }
 
-@Composable
-private fun HomeTeacherContent(
-    state: HomeTeacherUiState,
-    interactionListener: HomeTeacherInteractionListener,
-) {
     LazyColumn(
-        modifier = Modifier.fillMaxSize().background(AppTheme.color.bgHover),
+        modifier = Modifier
+            .fillMaxSize()
+            .background(AppTheme.color.bg),
+        contentPadding = PaddingValues(bottom = 24.dp),
     ) {
+        // Header banner
         item {
-            TeacherHeader(
-                teacherName = state.teacherName,
-                activeCourses = state.activeCourses,
+            HomeTeacherHeader(
+                name = state.doctorName,
+                pendingTasks = state.pendingGrading,
                 totalStudents = state.totalStudents,
-                pendingTasks = state.pendingTasks,
-                modifier = Modifier.padding(bottom = 40.dp)
+                activeCourses = state.totalCourses,
             )
         }
 
+        // Quick actions
         item {
-            QuickActionsRow(
-                interactionListener = interactionListener,
-                modifier = Modifier.padding(horizontal = 16.dp).padding(top = 16.dp)
+            QuickActionsSection(
+                onAddCourse = { backStack.add(TeacherRouteKeys.Courses) },
+                onGrading = { viewModel.onStartGradingClicked() },
             )
         }
 
-        if (state.todaySessions.isNotEmpty()) {
+        // Today's lectures
+        if (state.todaySchedule.isNotEmpty()) {
             item {
-                TeacherSectionHeader(
-                    title = "جدول اليوم",
-                    onActionClick = interactionListener::onViewAllScheduleClick,
-                    modifier = Modifier.padding(horizontal = 16.dp).padding(top = 24.dp)
+                SectionHeader(
+                    title = "محاضرات اليوم",
+                    onViewAll = { backStack.add(TeacherRouteKeys.Courses) },
                 )
             }
-            items(state.todaySessions, key = { it.id }) { session ->
-                TeacherSessionCard(
-                    session = session,
-                    modifier = Modifier.padding(horizontal = 16.dp).padding(top = 12.dp)
-                )
+            items(state.todaySchedule.take(3)) { session ->
+                TodaySessionCard(session = session)
             }
         }
 
+        // My courses
         if (state.courses.isNotEmpty()) {
             item {
-                TeacherSectionHeader(
+                SectionHeader(
                     title = "مقرراتي",
-                    onActionClick = interactionListener::onViewAllCoursesClick,
-                    modifier = Modifier.padding(horizontal = 16.dp).padding(top = 24.dp)
+                    onViewAll = { viewModel.onViewAllCoursesClicked() },
                 )
             }
-            items(state.courses, key = { it.id }) { course ->
-                TeacherCourseSummaryCard(
+            items(state.courses) { course ->
+                DashboardCourseCard(
                     course = course,
-                    onManageClick = { interactionListener.onManageCourseClick(course.id) },
-                    modifier = Modifier.padding(horizontal = 16.dp).padding(top = 12.dp)
+                    onManage = { viewModel.onManageCourseClicked(course.id) },
                 )
             }
         }
 
-        item { Spacer(Modifier.height(24.dp)) }
+        // Student performance this week
+        item { StudentPerformanceCard() }
     }
 }
 
 @Composable
-private fun TeacherHeader(
-    teacherName: String,
-    activeCourses: Int,
-    totalStudents: Int,
+private fun HomeTeacherHeader(
+    name: String,
     pendingTasks: Int,
-    modifier: Modifier = Modifier,
+    totalStudents: Int,
+    activeCourses: Int,
 ) {
-    Box(modifier = modifier) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth().height(192.dp)
-                .background(brush = verticalGradient(listOf(AppTheme.color.primary, AppTheme.color.primaryLight)))
-                .padding(horizontal = 24.dp).padding(top = 48.dp)
-        ) {
-            Text("مرحباً، $teacherName", color = AppTheme.color.bg, style = AppTheme.textStyle.headline.small, modifier = Modifier.fillMaxWidth())
-            Text("لوحة تحكم الدكتور", color = AppTheme.color.bgSecondary,
-                style = AppTheme.textStyle.body.medium.copy(fontWeight = FontWeight.Normal),
-                modifier = Modifier.fillMaxWidth().padding(top = 4.dp))
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(AppTheme.color.primaryDark)
+            .padding(horizontal = 20.dp, vertical = 24.dp),
+    ) {
+        Column {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(AppTheme.color.secondary),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_home),
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(26.dp),
+                    )
+                }
+                Spacer(Modifier.width(12.dp))
+                Column {
+                    Text(
+                        text = "مرحباً، $name!",
+                        color = Color.White,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    Text(
+                        text = "جاهز لبدء يوم تعليمي منمر",
+                        color = Color.White.copy(alpha = 0.75f),
+                        fontSize = 13.sp,
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(20.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                HeaderStatItem(value = "$pendingTasks", label = "مهمة معلقة", color = AppTheme.color.secondary)
+                HeaderStatItem(value = "$totalStudents", label = "طالب", color = Color.White)
+                HeaderStatItem(value = "$activeCourses", label = "مقرر نشط", color = Color.White)
+            }
         }
+    }
+}
+
+@Composable
+private fun HeaderStatItem(value: String, label: String, color: Color) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(value, color = color, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+        Text(label, color = Color.White.copy(alpha = 0.75f), fontSize = 12.sp)
+    }
+}
+
+@Composable
+private fun QuickActionsSection(
+    onAddCourse: () -> Unit,
+    onGrading: () -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 16.dp),
+    ) {
+        Text(
+            text = "إجراءات سريعة",
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold,
+            color = AppTheme.color.text,
+            modifier = Modifier.padding(bottom = 12.dp),
+        )
         Row(
-            modifier = Modifier
-                .align(Alignment.BottomCenter).fillMaxWidth()
-                .padding(horizontal = 24.dp).offset(y = 40.dp)
-                .dropShadow(RoundedCornerShape(24.dp), Shadow(radius = 10.dp, spread = -6.dp, color = AppTheme.color.text.copy(alpha = .1f), offset = DpOffset(0.dp, 8.dp)))
-                .dropShadow(RoundedCornerShape(24.dp), Shadow(radius = 25.dp, spread = -5.dp, color = AppTheme.color.text.copy(alpha = .1f), offset = DpOffset(0.dp, 20.dp)))
-                .background(AppTheme.color.bg, RoundedCornerShape(16.dp)).padding(16.dp),
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            TeacherStatItem(value = activeCourses.toString(), label = "مقرر نشط", modifier = Modifier.weight(1f))
-            TeacherStatItem(value = totalStudents.toString(), label = "طالب", modifier = Modifier.weight(1f))
-            TeacherStatItem(value = pendingTasks.toString(), label = "مهمة معلقة", modifier = Modifier.weight(1f))
+            QuickActionCard(
+                modifier = Modifier.weight(1f),
+                iconRes = R.drawable.ic_book,
+                label = "إضافة مقرر",
+                subLabel = "مقرر جديد",
+                isPrimary = true,
+                onClick = onAddCourse,
+            )
+            QuickActionCard(
+                modifier = Modifier.weight(1f),
+                iconRes = R.drawable.badge,
+                label = "التصحيح",
+                subLabel = "75 مهمة",
+                isPrimary = false,
+                onClick = onGrading,
+            )
         }
     }
 }
 
 @Composable
-private fun TeacherStatItem(value: String, label: String, modifier: Modifier = Modifier) {
-    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(text = value, color = AppTheme.color.primary, style = AppTheme.textStyle.headline.small)
-        Text(text = label, color = AppTheme.color.textSecondary, style = AppTheme.textStyle.label.medium)
-    }
-}
-
-@Composable
-private fun QuickActionsRow(interactionListener: HomeTeacherInteractionListener, modifier: Modifier = Modifier) {
-    Row(modifier = modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        QuickActionCard("إضافة مقرر", R.drawable.ic_book, interactionListener::onAddCourseClick, Modifier.weight(1f))
-        QuickActionCard("تصحيح", R.drawable.ic_grades, interactionListener::onGradingClick, Modifier.weight(1f))
-        QuickActionCard("تقارير", R.drawable.ic_info, interactionListener::onReportsClick, Modifier.weight(1f))
-    }
-}
-
-@Composable
-private fun QuickActionCard(label: String, iconRes: Int, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier.clip(RoundedCornerShape(16.dp))
-            .background(AppTheme.color.bg)
-            .border(1.17.dp, AppTheme.color.border, RoundedCornerShape(16.dp))
-            .clickAnimation { onClick() }.padding(12.dp),
-        horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)
+private fun QuickActionCard(
+    modifier: Modifier,
+    iconRes: Int,
+    label: String,
+    subLabel: String,
+    isPrimary: Boolean,
+    onClick: () -> Unit,
+) {
+    Card(
+        modifier = modifier
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isPrimary) AppTheme.color.primaryDark else Color.White,
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
-        Box(
-            modifier = Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(AppTheme.color.primary.copy(alpha = .1f)),
-            contentAlignment = Alignment.Center
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            Icon(painter = painterResource(iconRes), contentDescription = null, tint = AppTheme.color.primary, modifier = Modifier.size(20.dp))
-        }
-        Text(text = label, color = AppTheme.color.text, style = AppTheme.textStyle.label.medium.copy(fontWeight = FontWeight.Bold))
-    }
-}
-
-@Composable
-private fun TeacherSectionHeader(title: String, onActionClick: () -> Unit, modifier: Modifier = Modifier) {
-    Row(modifier = modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-        Text(text = title, color = AppTheme.color.text, style = AppTheme.textStyle.headline.small)
-        Text(text = "عرض الكل", color = AppTheme.color.textSecondary, style = AppTheme.textStyle.body.small, modifier = Modifier.clickAnimation { onActionClick() })
-    }
-}
-
-@Composable
-private fun TeacherSessionCard(session: TeacherSessionUiModel, modifier: Modifier = Modifier) {
-    Row(
-        modifier = modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp))
-            .background(AppTheme.color.bg).border(1.17.dp, AppTheme.color.border, RoundedCornerShape(16.dp)).padding(17.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(modifier = Modifier.size(48.dp).clip(RoundedCornerShape(12.dp)).background(AppTheme.color.borderFocus.copy(alpha = .1f)), contentAlignment = Alignment.Center) {
-            Icon(painter = painterResource(R.drawable.ic_clock), contentDescription = null, tint = AppTheme.color.primary, modifier = Modifier.size(24.dp))
-        }
-        Column(modifier = Modifier.weight(1f)) {
-            Text(text = session.courseName, color = AppTheme.color.text, style = AppTheme.textStyle.body.medium.copy(fontWeight = FontWeight.Bold))
-            Row(modifier = Modifier.padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                Icon(painter = painterResource(R.drawable.ic_clock), contentDescription = null, tint = AppTheme.color.primary, modifier = Modifier.size(12.dp))
-                Text(text = session.time, color = AppTheme.color.textSecondary, style = AppTheme.textStyle.label.medium, modifier = Modifier.padding(start = 4.dp))
-                Text(text = session.location, color = AppTheme.color.textSecondary, style = AppTheme.textStyle.label.medium, modifier = Modifier.padding(start = 16.dp))
+            Box(
+                modifier = Modifier
+                    .size(38.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(
+                        if (isPrimary) Color.White.copy(alpha = 0.15f)
+                        else AppTheme.color.primary.copy(alpha = 0.1f)
+                    ),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    painter = painterResource(iconRes),
+                    contentDescription = null,
+                    tint = if (isPrimary) Color.White else AppTheme.color.primary,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
+            Column {
+                Text(
+                    text = label,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = if (isPrimary) Color.White else AppTheme.color.text,
+                )
+                Text(
+                    text = subLabel,
+                    fontSize = 11.sp,
+                    color = if (isPrimary) Color.White.copy(0.75f) else AppTheme.color.textSecondary,
+                )
             }
         }
-        Box(modifier = Modifier.size(32.dp).clip(RoundedCornerShape(8.dp)).background(AppTheme.color.secondary), contentAlignment = Alignment.Center) {
-            Icon(painter = painterResource(R.drawable.ic_calendar), contentDescription = null, tint = AppTheme.color.primary, modifier = Modifier.size(16.dp))
-        }
     }
 }
 
 @Composable
-private fun TeacherCourseSummaryCard(course: TeacherCourseSummaryUiModel, onManageClick: () -> Unit, modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp))
-            .background(AppTheme.color.bg).border(1.17.dp, AppTheme.color.border, RoundedCornerShape(16.dp)).padding(17.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+private fun SectionHeader(title: String, onViewAll: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(text = course.name, color = AppTheme.color.text, style = AppTheme.textStyle.body.medium.copy(fontWeight = FontWeight.Bold))
-                Text(text = "${course.totalStudents} طالب  •  ${course.totalAssignments} واجب", color = AppTheme.color.textSecondary, style = AppTheme.textStyle.label.medium, modifier = Modifier.padding(top = 4.dp))
+        Text(title, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = AppTheme.color.text)
+        Text(
+            text = "عرض الكل",
+            fontSize = 13.sp,
+            color = AppTheme.color.primary,
+            modifier = Modifier.clickable(onClick = onViewAll),
+        )
+    }
+}
+
+@Composable
+private fun TodaySessionCard(session: ScheduleSessionDto) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(AppTheme.color.primaryDark),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_book),
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
+                Column {
+                    Text(
+                        text = session.courseName ?: "",
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 14.sp,
+                        color = AppTheme.color.text,
+                    )
+                    Text(
+                        text = "${session.startTime} ص  •  ${session.roomName ?: ""}  •  ${session.enrolled ?: 0} طالب",
+                        fontSize = 12.sp,
+                        color = AppTheme.color.textSecondary,
+                    )
+                }
             }
             Box(
-                modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(AppTheme.color.primary.copy(alpha = .1f)).clickAnimation { onManageClick() }.padding(horizontal = 12.dp, vertical = 6.dp)
+                modifier = Modifier
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(AppTheme.color.secondary)
+                    .padding(horizontal = 10.dp, vertical = 4.dp),
             ) {
-                Text(text = "إدارة", color = AppTheme.color.primary, style = AppTheme.textStyle.body.small.copy(fontWeight = FontWeight.Bold))
+                Text("ابدأ", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Medium)
             }
-        }
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            CourseMiniStat("متوسط الدرجة", "${course.averageGrade}%", Modifier.weight(1f))
-            CourseMiniStat("التقدم", "${(course.averageProgress * 100).toInt()}%", Modifier.weight(1f))
         }
     }
 }
 
 @Composable
-private fun CourseMiniStat(label: String, value: String, modifier: Modifier = Modifier) {
-    Column(modifier = modifier.clip(RoundedCornerShape(12.dp)).background(AppTheme.color.bgHover).padding(10.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(text = value, color = AppTheme.color.primary, style = AppTheme.textStyle.body.medium.copy(fontWeight = FontWeight.Bold))
-        Text(text = label, color = AppTheme.color.textSecondary, style = AppTheme.textStyle.label.medium, modifier = Modifier.padding(top = 2.dp))
+private fun DashboardCourseCard(course: CourseDto, onManage: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(AppTheme.color.primaryDark.copy(alpha = 0.15f)),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_book),
+                            contentDescription = null,
+                            tint = AppTheme.color.primaryDark,
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
+                    Column {
+                        Text(
+                            text = course.name,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 14.sp,
+                            color = AppTheme.color.text,
+                        )
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(
+                                text = "${course.enrolledCount ?: 0} طالب",
+                                fontSize = 12.sp,
+                                color = AppTheme.color.textSecondary,
+                            )
+                            Text("•", fontSize = 12.sp, color = AppTheme.color.textSecondary)
+                            Text(
+                                text = "${course.code}",
+                                fontSize = 12.sp,
+                                color = AppTheme.color.textSecondary,
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(12.dp))
+
+            Button(
+                onClick = onManage,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = AppTheme.color.primaryDark),
+            ) {
+                Text("إدارة المقرر", color = Color.White, fontSize = 13.sp)
+                Spacer(Modifier.width(4.dp))
+                Text("›", color = Color.White, fontSize = 16.sp)
+            }
+        }
     }
 }
 
 @Composable
-private fun HandleEffects(
-    effects: Flow<HomeTeacherEffect>,
-    onNavigateToCourses: () -> Unit,
-    onNavigateToStudents: () -> Unit,
-    onNavigateToGrading: () -> Unit,
-) {
-    LaunchedEffect(Unit) {
-        effects.collectLatest { effect ->
-            when (effect) {
-                HomeTeacherEffect.NavigateToCourses               -> onNavigateToCourses()
-                HomeTeacherEffect.NavigateToStudents              -> onNavigateToStudents()
-                HomeTeacherEffect.NavigateToGrading               -> onNavigateToGrading()
-                HomeTeacherEffect.NavigateToSchedule              -> { /* TODO */ }
-                HomeTeacherEffect.NavigateToReports               -> { /* TODO */ }
-                HomeTeacherEffect.NavigateToAddCourse             -> { /* TODO */ }
-                is HomeTeacherEffect.NavigateToManageCourse       -> { /* TODO */ }
+private fun StudentPerformanceCard() {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = AppTheme.color.secondary),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_home),
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(20.dp),
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = "أداء الطلاب",
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp,
+                )
+                Spacer(Modifier.weight(1f))
+                Text("هذا الأسبوع", color = Color.White.copy(0.75f), fontSize = 12.sp)
+            }
+            Spacer(Modifier.height(16.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceAround,
+            ) {
+                PerformanceStat(value = "85%", label = "معدل التسليم")
+                PerformanceStat(value = "92%", label = "معدل الحضور")
             }
         }
+    }
+}
+
+@Composable
+private fun PerformanceStat(value: String, label: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(value, color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+        Text(label, color = Color.White.copy(0.8f), fontSize = 12.sp)
     }
 }

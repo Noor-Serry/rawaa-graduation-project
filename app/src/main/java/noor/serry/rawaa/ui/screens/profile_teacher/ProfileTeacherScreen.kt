@@ -1,571 +1,401 @@
 package noor.serry.rawaa.ui.screens.profile_teacher
 
-import android.R.attr.translationY
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.FocusRequester.Companion.createRefs
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.layout.layout
-import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.max
-import androidx.compose.ui.unit.min
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.zIndex
-import androidx.constraintlayout.compose.ConstraintLayout
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collectLatest
-import org.koin.compose.viewmodel.koinViewModel
-import noor.serry.designsystem.components.Icon
-import noor.serry.designsystem.components.Text
-import noor.serry.designsystem.components.utils.clickAnimation
 import noor.serry.designsystem.design.AppTheme
 import noor.serry.rawaa.R
-import noor.serry.rawaa.ui.screens.negativeBottomPadding
+import noor.serry.rawaa.data.dto.CourseDto
+import org.koin.androidx.compose.koinViewModel
 
-// ── Design tokens matching Figma ─────────────────────────────────────────────
-private val NavyDark  = Color(0xFF1F2C47)
-private val NavyLight = Color(0xFF2D3F5F)
-private val TextPrimary   = Color(0xFF0F172A)
-private val TextSecondary = Color(0xFF64748B)
-private val BgSurface     = Color(0xFFF8FAFC)
-private val White         = Color(0xFFFFFFFF)
-private val GreenBadgeBg  = Color(0xFFD1FAE5)
-private val GreenBadgeFg  = Color(0xFF10B981)
-private val YellowBadge   = Color(0xFFFACC15)
-private val AwardBg       = Color(0xFFFEF3C7)
-private val AwardIcon     = Color(0xFFF59E0B)
-private val BlueIconBg    = Color(0x213B82F6)   // 13 % opacity
-private val GreenIconBg   = Color(0x2110B981)
-private val AmberIconBg   = Color(0x21F59E0B)
-private val Divider       = Color(0xFFF8FAFC)
-
-// ── Screen entry point ────────────────────────────────────────────────────────
 @Composable
 fun ProfileTeacherScreen(
-    onBack: () -> Unit = {},
     viewModel: ProfileTeacherViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
-    HandleEffects(effects = viewModel.effect)
-    ProfileTeacherContent(state = state, interactionListener = viewModel, onBack = onBack)
-}
 
-// ── Root content ──────────────────────────────────────────────────────────────
-@Composable
-private fun ProfileTeacherContent(
-    state: ProfileTeacherUiState,
-    interactionListener: ProfileTeacherInteractionListener,
-    onBack: () -> Unit,
-) {
-    when {
-        state.isLoading -> LoadingBox()
-        state.errorMessage != null -> ErrorBox(state.errorMessage!!, interactionListener)
-        else -> ProfileBody(state, interactionListener, onBack)
-    }
-}
-
-@Composable
-private fun LoadingBox() {
-    Box(Modifier.fillMaxSize().background(BgSurface), contentAlignment = Alignment.Center) {
-        Text("جاري التحميل...", color = TextSecondary, style = AppTheme.textStyle.body.medium)
-    }
-}
-
-@Composable
-private fun ErrorBox(message: String, listener: ProfileTeacherInteractionListener) {
-    Box(Modifier.fillMaxSize().background(BgSurface), contentAlignment = Alignment.Center) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(message, color = AppTheme.color.error, style = AppTheme.textStyle.body.medium)
-            Spacer(Modifier.height(12.dp))
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(NavyDark)
-                    .clickAnimation { listener.load() }
-                    .padding(horizontal = 24.dp, vertical = 10.dp)
-            ) {
-                Text("إعادة المحاولة", color = White,
-                    style = AppTheme.textStyle.body.medium.copy(fontWeight = FontWeight.Bold))
-            }
+    if (state.isLoading) {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator(color = AppTheme.color.primary)
         }
+        return
     }
-}
 
-// ── Main scrollable body ──────────────────────────────────────────────────────
-@Composable
-private fun ProfileBody(
-    state: ProfileTeacherUiState,
-    listener: ProfileTeacherInteractionListener,
-    onBack: () -> Unit,
-) {
+    val user = state.user
+    val profile = user?.profile
+
     LazyColumn(
-        modifier = Modifier.fillMaxSize().background(BgSurface),
+        modifier = Modifier
+            .fillMaxSize()
+            .background(AppTheme.color.bg),
+        contentPadding = PaddingValues(bottom = 32.dp),
     ) {
-        // ── Profile card (avatar + stats + edit button) ───────────────
+        // Header with avatar & name
         item {
-            ProfileCard(
-                state = state,
-                onEditClick = listener::onEditProfileClick,
-            )
-        }
-
-        // ── Academic info ─────────────────────────────────────────────
-        item {
-            SectionCard(modifier = Modifier.padding(top = 16.dp)) {
-                SectionHeader(title = "المعلومات الأكاديمية", iconRes = R.drawable.ic_book)
-                Spacer(Modifier.height(16.dp))
-                InfoRow(label = "الرقم الوظيفي", value = state.employeeId)
-                SectionDivider()
-                InfoRow(label = "الكلية", value = state.department)
-                SectionDivider()
-                InfoRow(label = "التخصص", value = state.specialization)
-                SectionDivider()
-                InfoRow(label = "الدرجة العلمية", value = state.degree)
-                if (state.experienceYears > 0) {
-                    SectionDivider()
-                    InfoRow(label = "سنوات الخبرة", value = "${state.experienceYears} سنوات")
-                }
-                if (state.enrollmentDate.isNotEmpty()) {
-                    SectionDivider()
-                    InfoRow(label = "تاريخ الالتحاق", value = state.enrollmentDate)
-                }
-            }
-        }
-
-        // ── Contact info ──────────────────────────────────────────────
-        item {
-            SectionCard(modifier = Modifier.padding(top = 16.dp)) {
-                SectionHeader(title = "معلومات الاتصال", iconRes = noor.serry.designsystem.R.drawable.mail)
-                Spacer(Modifier.height(16.dp))
-                if (state.email.isNotEmpty()) ContactRow(label = "البريد الإلكتروني", value = state.email, iconRes = noor.serry.designsystem.R.drawable.mail)
-                if (state.email.isNotEmpty() && state.phone.isNotEmpty()) SectionDivider()
-                if (state.phone.isNotEmpty()) ContactRow(label = "رقم الهاتف", value = state.phone, iconRes = R.drawable.ic_phone)
-                if ((state.phone.isNotEmpty() || state.email.isNotEmpty()) && state.office.isNotEmpty()) SectionDivider()
-                if (state.office.isNotEmpty()) ContactRow(label = "المكتب", value = state.office, iconRes = R.drawable.mappin)
-                if (state.office.isNotEmpty() && state.officeHours.isNotEmpty()) SectionDivider()
-                if (state.officeHours.isNotEmpty()) ContactRow(label = "الساعات المكتبية", value = state.officeHours, iconRes = R.drawable.ic_clock)
-            }
-        }
-
-        // ── Current courses ───────────────────────────────────────────
-        if (state.currentCourses.isNotEmpty()) {
-            item {
-                SectionCard(modifier = Modifier.padding(horizontal = 24.dp).padding(top = 16.dp)) {
-                    SectionHeader(title = "المقررات الحالية", iconRes = R.drawable.lock)
-                    Spacer(Modifier.height(16.dp))
-                    state.currentCourses.forEachIndexed { index, course ->
-                        if (index > 0) Spacer(Modifier.height(12.dp))
-                        CourseRow(course = course)
-                    }
-                }
-            }
-        }
-
-        // ── Achievements ──────────────────────────────────────────────
-        if (state.achievements.isNotEmpty()) {
-            item {
-                SectionCard(modifier = Modifier.padding(horizontal = 24.dp).padding(top = 16.dp)) {
-                    SectionHeader(title = "الإنجازات والجوائز", iconRes = R.drawable.badge)
-                    Spacer(Modifier.height(16.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        state.achievements.forEach { achievement ->
-                            AwardCard(
-                                modifier = Modifier.weight(1f),
-                                title = achievement.title,
-                                year = achievement.year,
-                            )
-                        }
-                    }
-                }
-            }
-        }
-
-        item { Spacer(Modifier.height(32.dp)) }
-    }
-}
-
-
-@Composable
-private fun ProfileCard(
-    state: ProfileTeacherUiState,
-    onEditClick: () -> Unit,
-) {
-    val overlap = 24.dp
-
-    ConstraintLayout(modifier = Modifier.fillMaxWidth()) {
-        val (gradient, card) = createRefs()
-
-        // Gradient strip
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Brush.verticalGradient(listOf(NavyDark, NavyLight)))
-                .padding(horizontal = 24.dp, vertical = 48.dp)
-                .constrainAs(gradient) {
-                    top.linkTo(parent.top)
-                    start.linkTo(parent.start)
-                    end.linkTo(parent.end)
-                },
-        ) {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    text = "الملف الشخصي",
-                    color = White,
-                    style = AppTheme.textStyle.headline.small.copy(fontWeight = FontWeight.Bold, fontSize = 24.sp),
-                )
-                Text(
-                    text = "معلوماتك الأكاديمية والمهنية",
-                    color = White.copy(alpha = 0.8f),
-                    style = AppTheme.textStyle.body.medium,
-                )
-            }
-        }
-
-        // White card — top linked to gradient bottom with negative margin = overlap
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp)
-                .clip(RoundedCornerShape(24.dp))
-                .background(White)
-                .padding(24.dp)
-                .constrainAs(card) {
-                    top.linkTo(gradient.bottom, margin = -overlap)
-                    start.linkTo(parent.start)
-                    end.linkTo(parent.end)
-                },
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            // Avatar circle with camera badge
-            Box(modifier = Modifier.size(96.dp)) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .clip(CircleShape)
-                        .background(Brush.verticalGradient(listOf(NavyDark, NavyLight))),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(painterResource(R.drawable.person), contentDescription=null, tint = White, modifier = Modifier.size(48.dp))
-                }
-                Box(
-                    modifier = Modifier
-                        .size(32.dp)
-                        .align(Alignment.BottomEnd)
-                        .clip(CircleShape)
-                        .background(YellowBadge),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(painterResource(R.drawable.ic_camera), contentDescription = "تغيير الصورة", tint = NavyDark, modifier = Modifier.size(16.dp))
-                }
-            }
-            Spacer(Modifier.height(4.dp))
-            Text(state.name, color = TextPrimary, style = AppTheme.textStyle.headline.small.copy(fontWeight = FontWeight.Bold, fontSize = 20.sp))
-            if (state.specialization.isNotEmpty()) {
-                Text(state.specialization, color = TextSecondary, style = AppTheme.textStyle.body.small)
-            }
-            if (state.degree.isNotEmpty()) {
-                Box(modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(GreenBadgeBg).padding(horizontal = 12.dp, vertical = 4.dp)) {
-                    Text(state.degree, color = GreenBadgeFg, style = AppTheme.textStyle.body.small.copy(fontWeight = FontWeight.Bold))
-                }
-            }
-            Spacer(Modifier.height(8.dp))
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                StatTile(Modifier.weight(1f), state.totalStudents.toString(), "إجمالي الطلاب", GreenBadgeFg, GreenIconBg, R.drawable.ic_person)
-                StatTile(Modifier.weight(1f), state.activeCourses.toString(), "المقررات الحالية", Color(0xFF3B82F6), BlueIconBg, R.drawable.ic_book)
-            }
-            Spacer(Modifier.height(4.dp))
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(NavyDark)
-                    .clickAnimation { onEditClick() }
-                    .padding(vertical = 14.dp),
-                contentAlignment = Alignment.Center,
+                    .background(AppTheme.color.primaryDark)
+                    .padding(horizontal = 20.dp, vertical = 24.dp),
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Icon(painterResource(R.drawable.ic_edit), contentDescription=null, tint = White, modifier = Modifier.size(20.dp))
-                    Text("تعديل الملف الشخصي", color = White, style = AppTheme.textStyle.body.medium.copy(fontWeight = FontWeight.Medium, fontSize = 16.sp))
+                Column {
+                    Text(
+                        text = "الملف الشخصي",
+                        color = Color.White,
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    Text(
+                        text = "معلوماتك الأكاديمية والمهنية",
+                        color = Color.White.copy(0.75f),
+                        fontSize = 13.sp,
+                    )
+                }
+            }
+        }
+
+        // Profile card
+        item {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .offset(y = (-16).dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(20.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    // Avatar
+                    Box(contentAlignment = Alignment.BottomEnd) {
+                        Box(
+                            modifier = Modifier
+                                .size(80.dp)
+                                .clip(CircleShape)
+                                .background(AppTheme.color.primaryDark),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_person),
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(44.dp),
+                            )
+                        }
+                        Box(
+                            modifier = Modifier
+                                .size(24.dp)
+                                .clip(CircleShape)
+                                .background(AppTheme.color.secondary),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_person),
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(14.dp),
+                            )
+                        }
+                    }
+
+                    Spacer(Modifier.height(12.dp))
+                    Text(
+                        text = "د. ${user?.name ?: ""}",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        color = AppTheme.color.text,
+                    )
+                    Text(
+                        text = profile?.departmentName ?: profile?.roleTitle ?: "",
+                        fontSize = 13.sp,
+                        color = AppTheme.color.textSecondary,
+                    )
+                    Spacer(Modifier.height(6.dp))
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(AppTheme.color.secondary.copy(0.15f))
+                            .padding(horizontal = 10.dp, vertical = 4.dp),
+                    ) {
+                        Text(
+                            text = profile?.roleTitle ?: "دكتوراه",
+                            fontSize = 12.sp,
+                            color = AppTheme.color.secondary,
+                            fontWeight = FontWeight.Medium,
+                        )
+                    }
+
+                    Spacer(Modifier.height(16.dp))
+
+                    Button(
+                        onClick = viewModel::onEditProfileClicked,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = AppTheme.color.primaryDark),
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_person),
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(16.dp),
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Text("تعديل الملف الشخصي", color = Color.White, fontSize = 13.sp)
+                    }
+
+                    Spacer(Modifier.height(16.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceAround,
+                    ) {
+                        ProfileQuickStat(icon = R.drawable.ic_book, value = "10", label = "سنوات الخبرة")
+                        ProfileQuickStat(icon = R.drawable.ic_person, value = "${state.totalStudents}", label = "إجمالي الطلاب")
+                        ProfileQuickStat(icon = R.drawable.ic_book, value = "${state.activeCourses.size}", label = "المقررات الحالية")
+                    }
+                }
+            }
+        }
+
+        // Academic info section
+        item {
+            SectionTitle(title = "المعلومات الأكاديمية", iconRes = R.drawable.ic_book)
+        }
+
+        item {
+            InfoCard {
+                InfoRow(label = "الرقم الوظيفي", value = "FAC-2020-001")
+                InfoRow(label = "الكلية", value = profile?.departmentName ?: "كلية علوم الحاسب")
+                InfoRow(label = "التخصص", value = profile?.roleTitle ?: "هندسة البرمجيات")
+                InfoRow(label = "الدرجة العلمية", value = "دكتوراه")
+                InfoRow(label = "سنوات الخبرة", value = "10 سنوات")
+                InfoRow(label = "تاريخ الالتحاق", value = profile?.hireDate ?: "يناير 2020", isLast = true)
+            }
+        }
+
+        // Contact info section
+        item { SectionTitle(title = "معلومات الاتصال", iconRes = R.drawable.badge) }
+
+        item {
+            InfoCard {
+                InfoRowWithEdit(
+                    iconRes = R.drawable.badge,
+                    label = "البريد الإلكتروني",
+                    value = user?.email ?: "",
+                )
+                InfoRowWithEdit(
+                    iconRes = R.drawable.ic_person,
+                    label = "رقم الهاتف",
+                    value = profile?.phone ?: "+20 123 456 7890",
+                )
+                InfoRowWithEdit(
+                    iconRes = R.drawable.ic_home,
+                    label = "المكتب",
+                    value = "مبنى الهندسة - الدور الثالث - مكتب 305",
+                )
+                InfoRowWithEdit(
+                    iconRes = R.drawable.ic_book,
+                    label = "الساعات المكتبية",
+                    value = "الأحد والثلاثاء: 10:00 - 12:00",
+                    isLast = true,
+                )
+            }
+        }
+
+        // Current courses section
+        if (state.activeCourses.isNotEmpty()) {
+            item { SectionTitle(title = "المقررات الحالية", iconRes = R.drawable.ic_book) }
+
+            items(state.activeCourses) { course ->
+                ProfileCourseRow(course = course)
+            }
+        }
+    }
+}
+
+@Composable
+private fun ProfileQuickStat(icon: Int, value: String, label: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Box(
+            modifier = Modifier
+                .size(44.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .background(AppTheme.color.bg),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                painter = painterResource(icon),
+                contentDescription = null,
+                tint = AppTheme.color.primary,
+                modifier = Modifier.size(22.dp),
+            )
+        }
+        Spacer(Modifier.height(4.dp))
+        Text(value, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = AppTheme.color.text)
+        Text(label, fontSize = 10.sp, color = AppTheme.color.textSecondary)
+    }
+}
+
+@Composable
+private fun SectionTitle(title: String, iconRes: Int) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Icon(
+            painter = painterResource(iconRes),
+            contentDescription = null,
+            tint = AppTheme.color.primary,
+            modifier = Modifier.size(18.dp),
+        )
+        Text(title, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = AppTheme.color.text)
+    }
+}
+
+@Composable
+private fun InfoCard(content: @Composable ColumnScope.() -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+    ) {
+        Column(modifier = Modifier.padding(4.dp), content = content)
+    }
+}
+
+@Composable
+private fun InfoRow(label: String, value: String, isLast: Boolean = false) {
+    Column {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text(label, fontSize = 13.sp, color = AppTheme.color.textSecondary)
+            Text(value, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = AppTheme.color.text)
+        }
+        if (!isLast) HorizontalDivider(color = AppTheme.color.bg, thickness = 1.dp)
+    }
+}
+
+@Composable
+private fun InfoRowWithEdit(iconRes: Int, label: String, value: String, isLast: Boolean = false) {
+    Column {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Icon(
+                painter = painterResource(iconRes),
+                contentDescription = null,
+                tint = AppTheme.color.textSecondary,
+                modifier = Modifier.size(18.dp),
+            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(label, fontSize = 11.sp, color = AppTheme.color.textSecondary)
+                Text(value, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = AppTheme.color.text)
+            }
+            Icon(
+                painter = painterResource(R.drawable.ic_person),
+                contentDescription = "تعديل",
+                tint = AppTheme.color.textSecondary,
+                modifier = Modifier.size(16.dp).clickable { },
+            )
+        }
+        if (!isLast) HorizontalDivider(color = AppTheme.color.bg, thickness = 1.dp)
+    }
+}
+
+@Composable
+private fun ProfileCourseRow(course: CourseDto) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp),
+        shape = RoundedCornerShape(10.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_person),
+                    contentDescription = null,
+                    tint = AppTheme.color.textSecondary,
+                    modifier = Modifier.size(20.dp),
+                )
+                Column {
+                    Text(course.name, fontWeight = FontWeight.Medium, fontSize = 13.sp, color = AppTheme.color.text)
+                    Text(
+                        text = "طالب ${course.enrolledCount ?: 0} • ${course.code}",
+                        fontSize = 11.sp,
+                        color = AppTheme.color.textSecondary,
+                    )
                 }
             }
         }
     }
 }
-// ── Stat tile ─────────────────────────────────────────────────────────────────
+
 @Composable
-private fun StatTile(
-    modifier: Modifier = Modifier,
-    value: String,
-    label: String,
-    iconTint: Color,
-    iconBgColor: Color,
-    iconRes: Int,
-) {
-    Column(
-        modifier = modifier
-            .clip(RoundedCornerShape(16.dp))
-            .background(BgSurface)
-            .padding(12.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+private fun AchievementBadge(modifier: Modifier, title: String, year: String, color: Color) {
+    Card(
+        modifier = modifier,
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = color.copy(alpha = 0.12f)),
     ) {
-        Box(
+        Column(
             modifier = Modifier
-                .size(40.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(iconBgColor),
-            contentAlignment = Alignment.Center,
+                .fillMaxWidth()
+                .padding(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Icon(
-                painter = painterResource(iconRes),
+                painter = painterResource(R.drawable.badge),
                 contentDescription = null,
-                tint = iconTint,
-                modifier = Modifier.size(20.dp),
+                tint = color,
+                modifier = Modifier.size(32.dp),
             )
-        }
-        Text(
-            text = value,
-            color = TextPrimary,
-            style = AppTheme.textStyle.body.medium.copy(fontWeight = FontWeight.Bold, fontSize = 18.sp),
-        )
-        Text(
-            text = label,
-            color = TextSecondary,
-            style = AppTheme.textStyle.label.medium.copy(fontSize = 12.sp),
-        )
-    }
-}
-
-// ── Section card wrapper ──────────────────────────────────────────────────────
-@Composable
-private fun SectionCard(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth().padding(horizontal = 24.dp)
-
-            .clip(RoundedCornerShape(16.dp))
-            .background(White)
-            .padding(16.dp),
-    ) { content() }
-}
-
-// ── Section header row (icon + title) ────────────────────────────────────────
-@Composable
-private fun SectionHeader(title: String, iconRes: Int) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.End, // RTL: icon on right
-    ) {
-        Text(
-            text = title,
-            color = TextPrimary,
-            style = AppTheme.textStyle.body.medium.copy(fontWeight = FontWeight.Bold, fontSize = 18.sp),
-            modifier = Modifier.weight(1f),
-        )
-        Spacer(Modifier.width(8.dp))
-        Icon(
-            painter = painterResource(iconRes),
-            contentDescription = null,
-            tint = NavyDark,
-            modifier = Modifier.size(20.dp),
-        )
-    }
-}
-
-// ── Key-value info row ────────────────────────────────────────────────────────
-@Composable
-private fun InfoRow(label: String, value: String) {
-    if (value.isEmpty()) return
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        // Value on the right in RTL
-        Text(
-            text = value,
-            color = TextPrimary,
-            style = AppTheme.textStyle.body.small.copy(fontWeight = FontWeight.Bold, fontSize = 14.sp),
-        )
-        Text(
-            text = label,
-            color = TextSecondary,
-            style = AppTheme.textStyle.body.small.copy(fontSize = 14.sp),
-        )
-    }
-}
-
-// ── Contact info row (with icon box on left, label/value stacked, edit icon) ──
-@Composable
-private fun ContactRow(label: String, value: String, iconRes: Int) {
-    if (value.isEmpty()) return
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        // Edit pencil (far right in RTL)
-        Icon(
-            painter = painterResource(R.drawable.ic_edit),
-            contentDescription = "تعديل",
-            tint = NavyDark,
-            modifier = Modifier.size(16.dp),
-        )
-        Spacer(Modifier.width(8.dp))
-        // Label + value stacked
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = label,
-                color = TextSecondary,
-                style = AppTheme.textStyle.label.medium.copy(fontSize = 12.sp),
-            )
-            Spacer(Modifier.height(4.dp))
-            Text(
-                text = value,
-                color = TextPrimary,
-                style = AppTheme.textStyle.body.small.copy(fontWeight = FontWeight.Medium, fontSize = 14.sp),
-            )
-        }
-        Spacer(Modifier.width(8.dp))
-        // Icon box on the left (RTL)
-        Box(
-            modifier = Modifier
-                .size(40.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(BgSurface),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                painter = painterResource(iconRes),
-                contentDescription = null,
-                tint = TextSecondary,
-                modifier = Modifier.size(20.dp),
-            )
-        }
-    }
-}
-
-// ── Course row ────────────────────────────────────────────────────────────────
-@Composable
-private fun CourseRow(course: CourseRefUiModel) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(BgSurface)
-            .padding(horizontal = 12.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        // Icon on left side (RTL)
-        Icon(
-            painter = painterResource(R.drawable.ic_person),
-            contentDescription = null,
-            tint = TextSecondary,
-            modifier = Modifier.size(20.dp),
-        )
-        Spacer(Modifier.width(8.dp))
-        // Name + code
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = course.name,
-                color = TextPrimary,
-                style = AppTheme.textStyle.body.small.copy(fontWeight = FontWeight.Bold, fontSize = 14.sp),
-            )
-            Spacer(Modifier.height(4.dp))
-            Text(
-                text = "${course.code} - ${course.studentsCount} طالب",
-                color = TextSecondary,
-                style = AppTheme.textStyle.label.medium.copy(fontSize = 12.sp),
-            )
-        }
-    }
-}
-
-// ── Award card ────────────────────────────────────────────────────────────────
-@Composable
-private fun AwardCard(modifier: Modifier = Modifier, title: String, year: String) {
-    Column(
-        modifier = modifier
-            .clip(RoundedCornerShape(12.dp))
-            .background(AwardBg)
-            .padding(12.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Icon(
-            painter = painterResource(R.drawable.badge),
-            contentDescription = null,
-            tint = AwardIcon,
-            modifier = Modifier.size(32.dp),
-        )
-        Text(
-            text = title,
-            color = TextPrimary,
-            style = AppTheme.textStyle.label.medium.copy(fontWeight = FontWeight.Bold, fontSize = 12.sp),
-        )
-        Text(
-            text = year,
-            color = TextSecondary,
-            style = AppTheme.textStyle.label.medium.copy(fontSize = 12.sp),
-        )
-    }
-}
-
-// ── Divider ───────────────────────────────────────────────────────────────────
-@Composable
-private fun SectionDivider() {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(1.dp)
-            .background(Divider),
-    )
-}
-
-// ── Effect handler ────────────────────────────────────────────────────────────
-@Composable
-private fun HandleEffects(effects: Flow<ProfileTeacherEffect>) {
-    LaunchedEffect(Unit) {
-        effects.collectLatest { effect ->
-            when (effect) {
-                ProfileTeacherEffect.NavigateToEditProfile -> { /* TODO: navigate */ }
-            }
+            Spacer(Modifier.height(6.dp))
+            Text(title, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = color)
+            Text(year, fontSize = 11.sp, color = color.copy(0.7f))
         }
     }
 }

@@ -1,89 +1,60 @@
 package noor.serry.rawaa.ui.screens.home_teacher
 
-import noor.serry.rawaa.data.dto.CourseDto
-import noor.serry.rawaa.data.dto.DoctorDashboardDto
-import noor.serry.rawaa.data.dto.ScheduleSessionDto
 import noor.serry.rawaa.data.repository.UniversityRepository
 import noor.serry.rawaa.ui.base.BaseViewModel
 import noor.serry.rawaa.ui.base.DispatcherProvider
 
 class HomeTeacherViewModel(
     private val repository: UniversityRepository,
-    private val dispatchers: DispatcherProvider,
+    dispatcherProvider: DispatcherProvider,
 ) : BaseViewModel<HomeTeacherUiState, HomeTeacherEffect>(
     initialState = HomeTeacherUiState(),
-    dispatcherProvider = dispatchers,
-), HomeTeacherInteractionListener {
+    dispatcherProvider = dispatcherProvider,
+) {
 
-    init { load() }
+    init {
+        loadDashboard()
+    }
 
-    fun load() {
-        updateState { it.copy(isLoading = true) }
+    fun loadDashboard() {
+        updateState { it.copy(isLoading = true, error = null) }
         tryToExecute(
-            action = { repository.getDoctorDashboard() },
-            onSuccess = { response ->
-                val dashboard = response.data
-                if (dashboard != null) {
-                    updateState { dashboard.toHomeTeacherUiState() }
-                } else {
-                    updateState { it.copy(isLoading = false) }
+            action = {
+                val dashboard = repository.getDoctorDashboard()
+                val me = repository.getMe()
+                Pair(dashboard, me)
+            },
+            onSuccess = { (dashboard, me) ->
+                val data = dashboard.data
+                val user = me.data
+                updateState { state ->
+                    state.copy(
+                        isLoading = false,
+                        doctorName = user?.name ?: "",
+                        totalCourses = data?.totalCourses ?: 0,
+                        totalStudents = data?.totalStudents ?: 0,
+                        courses = data?.courses ?: emptyList(),
+                        todaySchedule = data?.schedule ?: emptyList(),
+                        upcomingExams = data?.upcomingExams ?: emptyList(),
+                    )
                 }
             },
-            onError = { updateState { it.copy(isLoading = false) } },
-            dispatcher = dispatchers.IO,
+            onError = { e ->
+                updateState { it.copy(isLoading = false, error = e.message) }
+                sendNewEffect(HomeTeacherEffect.ShowError(e.message ?: "حدث خطأ"))
+            },
         )
     }
 
-    override fun onAddCourseClick() =
-        sendNewNavigationEffect(HomeTeacherEffect.NavigateToAddCourse)
+    fun onManageCourseClicked(courseId: Int) {
+        sendNewNavigationEffect(HomeTeacherEffect.NavigateToCourseDetail(courseId))
+    }
 
-    override fun onNewAssignmentClick() =
-        sendNewNavigationEffect(HomeTeacherEffect.NavigateToAddCourse)
-
-    override fun onGradingClick() =
-        sendNewNavigationEffect(HomeTeacherEffect.NavigateToGrading)
-
-    override fun onReportsClick() =
-        sendNewNavigationEffect(HomeTeacherEffect.NavigateToSchedule)
-
-    override fun onViewAllScheduleClick() =
-        sendNewNavigationEffect(HomeTeacherEffect.NavigateToStudents)
-
-    override fun onViewAllCoursesClick() =
+    fun onViewAllCoursesClicked() {
         sendNewNavigationEffect(HomeTeacherEffect.NavigateToCourses)
+    }
 
-    override fun onManageCourseClick(courseId: String) =
-        sendNewNavigationEffect(HomeTeacherEffect.NavigateToManageCourse(courseId))
+    fun onStartGradingClicked() {
+        sendNewNavigationEffect(HomeTeacherEffect.NavigateToGrading)
+    }
 }
-
-// ── Mappers ──────────────────────────────────────────────────────────────────
-
-fun DoctorDashboardDto.toHomeTeacherUiState() = HomeTeacherUiState(
-    isLoading = false,
-    teacherName = "",
-    pendingTasks = 0,
-    totalStudents = totalStudents,
-    activeCourses = totalCourses,
-    todaySessions = schedule.map { it.toTeacherSessionUiModel() },
-    pendingAssignments = emptyList(),
-    courses = courses.map { it.toTeacherCourseSummaryUiModel() },
-    weeklySubmissionRate = 0,
-    weeklyAttendanceRate = 0,
-)
-
-fun ScheduleSessionDto.toTeacherSessionUiModel() = TeacherSessionUiModel(
-    id = id.toString(),
-    courseName = courseName ?: "",
-    time = "$startTime - $endTime",
-    location = roomName ?: "",
-    studentsCount = enrolled ?: 0,
-)
-
-fun CourseDto.toTeacherCourseSummaryUiModel() = TeacherCourseSummaryUiModel(
-    id = id.toString(),
-    name = name,
-    averageGrade = 0,
-    totalAssignments = 0,
-    totalStudents = enrolledCount ?: 0,
-    averageProgress = 0f,
-)

@@ -1,32 +1,20 @@
 package noor.serry.rawaa.ui.screens.profile_teacher
 
+import noor.serry.rawaa.data.dto.CourseDto
+import noor.serry.rawaa.data.dto.EmployeeDto
+import noor.serry.rawaa.data.dto.UserDto
+
 data class ProfileTeacherUiState(
     val isLoading: Boolean = true,
-    val employeeId: String = "",
-    val name: String = "",
-    val department: String = "",
-    val specialization: String = "",
-    val degree: String = "",
-    val experienceYears: Int = 0,
-    val enrollmentDate: String = "",
-    val email: String = "",
-    val phone: String = "",
-    val office: String = "",
-    val officeHours: String = "",
+    val user: UserDto? = null,
+    val employee: EmployeeDto? = null,
+    val activeCourses: List<CourseDto> = emptyList(),
     val totalStudents: Int = 0,
-    val activeCourses: Int = 0,
-    val errorMessage: String? = null,
-    val currentCourses: List<CourseRefUiModel> = emptyList(),
-    val achievements: List<AchievementUiModel> = emptyList(),
+    val yearsOfExperience: Int = 0,
+    val error: String? = null,
 )
 
-data class CourseRefUiModel(
-    val name: String,
-    val code: String,
-    val studentsCount: Int,
-)
-
-data class AchievementUiModel(
-    val title: String,
-    val year: String,
-)
+sealed interface ProfileTeacherEffect {
+    data object NavigateToEditProfile : ProfileTeacherEffect
+    data class ShowError(val message: String) : ProfileTeacherEffect
+}

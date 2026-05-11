@@ -1,42 +1,35 @@
 package noor.serry.rawaa.ui.screens.grading
 
+import noor.serry.rawaa.data.dto.CourseDto
+
 data class GradingUiState(
     val isLoading: Boolean = true,
-    val pendingAssignments: List<PendingAssignmentUiModel> = emptyList(),
-    val gradedAssignments: List<GradedAssignmentUiModel> = emptyList(),
-    val totalGradedCount: Int = 0,
-    val totalPendingCount: Int = 0,
-    val selectedTab: GradingTab = GradingTab.PENDING,
+    val gradedCount: Int = 0,
+    val pendingCount: Int = 0,
     val searchQuery: String = "",
-) {
-    val displayedPending: List<PendingAssignmentUiModel>
-        get() = if (searchQuery.isBlank()) pendingAssignments
-        else pendingAssignments.filter { it.title.contains(searchQuery) || it.courseName.contains(searchQuery) }
-
-    val displayedGraded: List<GradedAssignmentUiModel>
-        get() = if (searchQuery.isBlank()) gradedAssignments
-        else gradedAssignments.filter { it.title.contains(searchQuery) || it.courseName.contains(searchQuery) }
-}
+    val selectedTab: GradingTab = GradingTab.PENDING,
+    val pendingAssignments: List<GradingItem> = emptyList(),
+    val gradedAssignments: List<GradingItem> = emptyList(),
+    val error: String? = null,
+)
 
 enum class GradingTab { PENDING, GRADED }
 
-data class PendingAssignmentUiModel(
-    val id: String,
-    val title: String,
+data class GradingItem(
+    val courseId: Int,
+    val assignmentTitle: String,
     val courseName: String,
-    val deadline: String,
+    val deadlineDaysAgo: String,
+    val totalPoints: Int,
     val submittedCount: Int,
     val totalStudents: Int,
-    val completionPercent: Int,
-    val completionProgress: Float,
-    val averageGradingMinutes: Int,
+    val submittedPercent: Int,
+    val avgGradingMinutes: Int,
+    val isGraded: Boolean = false,
+    val avgGrade: Int? = null,
 )
 
-data class GradedAssignmentUiModel(
-    val id: String,
-    val title: String,
-    val courseName: String,
-    val gradedDate: String,
-    val totalStudents: Int,
-    val averageGrade: Int,
-)
+sealed interface GradingEffect {
+    data class StartGrading(val courseId: Int) : GradingEffect
+    data class ShowError(val message: String) : GradingEffect
+}
