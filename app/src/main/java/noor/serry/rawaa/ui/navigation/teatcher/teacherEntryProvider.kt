@@ -7,6 +7,7 @@ import noor.serry.rawaa.ui.screens.courses_teacher.CoursesTeacherScreen
 import noor.serry.rawaa.ui.screens.grading.GradingScreen
 import noor.serry.rawaa.ui.screens.home_teacher.HomeTeacherScreen
 import noor.serry.rawaa.ui.screens.profile_teacher.ProfileTeacherScreen
+import noor.serry.rawaa.ui.screens.student_profile_teacher.StudentProfileScreen
 import noor.serry.rawaa.ui.screens.students.StudentsScreen
 
 val teacherEntryProvider: (NavKey) -> NavEntry<NavKey> = entryProvider {
@@ -25,5 +26,9 @@ val teacherEntryProvider: (NavKey) -> NavEntry<NavKey> = entryProvider {
     }
     entry<TeacherRouteKeys.Profile> {
         ProfileTeacherScreen()
+    }
+
+    entry<TeacherRouteKeys.StudentProfile> {
+        StudentProfileScreen(it.studentId)
     }
 }

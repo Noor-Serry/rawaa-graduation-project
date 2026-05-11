@@ -27,7 +27,8 @@ class StudentsViewModel(
                         students = uiModels,
                         totalCount = uiModels.size,
                         needsFollowUpCount = uiModels.count { s -> s.statusType == StudentStatusType.NEEDS_FOLLOW_UP },
-                        failingCount = uiModels.count { s -> s.grade < 50 },
+                        // Removed: failingCount — relied on a synthetic grade Int that was a GPA conversion,
+                        //   not a real server-provided grade field. No actual grade data is available in StudentDto.
                     )
                 }
             },
@@ -44,42 +45,39 @@ class StudentsViewModel(
         sendNewEffect(StudentsEffect.NavigateToStudentProfile(studentId))
     }
 
-    override fun onSendMessageClick(studentId: String) {
-        sendNewEffect(StudentsEffect.NavigateToSendMessage(studentId))
-    }
-
-    override fun onSendBulkMessageClick() {
-        sendNewEffect(StudentsEffect.NavigateToSendBulkMessage)
-    }
+    // Removed: onSendMessageClick — no messaging endpoint exists in UniversityRepository
+    // Removed: onSendBulkMessageClick — no bulk messaging endpoint exists in UniversityRepository
 }
 
 // ── Mapper ────────────────────────────────────────────────────────────────────
 
 private fun StudentDto.toStudentUiModel(): StudentUiModel {
     val gpaFloat = gpa?.toFloatOrNull() ?: 0f
+    // Status is derived from the real gpa field — acceptable UI-side classification
     val statusType = when {
         gpaFloat >= 3.5f -> StudentStatusType.EXCELLENT
         gpaFloat >= 2.0f -> StudentStatusType.GOOD
         else             -> StudentStatusType.NEEDS_FOLLOW_UP
     }
     val statusLabel = when (statusType) {
-        StudentStatusType.EXCELLENT      -> "ممتاز"
-        StudentStatusType.GOOD           -> "جيد"
+        StudentStatusType.EXCELLENT       -> "ممتاز"
+        StudentStatusType.GOOD            -> "جيد"
         StudentStatusType.NEEDS_FOLLOW_UP -> "يحتاج متابعة"
     }
-    val gradeInt = (gpaFloat / 4f * 100).toInt()
     return StudentUiModel(
         id = id.toString(),
         name = name,
         email = email,
+        departmentName = departmentName,
+        level = level,
+        gpa = gpa,                          // pass raw String as returned by server
         statusLabel = statusLabel,
         statusType = statusType,
-        attendance = 0,
-        grade = gradeInt,
-        assignmentsSubmitted = 0,
-        totalAssignments = 0,
-        assignmentProgress = 0f,
-        assignmentProgressPercent = 0,
-        isTrendingUp = statusType != StudentStatusType.NEEDS_FOLLOW_UP,
+        enrollmentYear = enrollmentYear,
+        isActive = isActive == 1,
+        // Removed: attendance — not in StudentDto
+        // Removed: grade (Int) — converting GPA to a % integer was misleading; gpa String is now passed directly
+        // Removed: assignmentsSubmitted / totalAssignments — not in StudentDto
+        // Removed: isTrendingUp — no backend signal
     )
 }

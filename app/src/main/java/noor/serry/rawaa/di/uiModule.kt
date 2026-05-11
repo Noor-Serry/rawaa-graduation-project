@@ -15,6 +15,7 @@ import noor.serry.rawaa.ui.screens.profile_student.ProfileViewModel
 import noor.serry.rawaa.ui.screens.profile_teacher.ProfileTeacherViewModel
 import noor.serry.rawaa.ui.screens.schedule.ScheduleViewModel
 import noor.serry.rawaa.ui.screens.studentScreens.menu.MenuViewModel
+import noor.serry.rawaa.ui.screens.student_profile_teacher.StudentProfileViewModel
 import noor.serry.rawaa.ui.screens.students.StudentsViewModel
 import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.viewModelOf
@@ -38,6 +39,6 @@ val uiModule = module {
     viewModelOf(::ProfileTeacherViewModel)
     viewModelOf(::MenuViewModel)
     viewModelOf(::NotificationsViewModel)
-
+    viewModelOf(::StudentProfileViewModel)
     singleOf(::MainViewModel)
 }

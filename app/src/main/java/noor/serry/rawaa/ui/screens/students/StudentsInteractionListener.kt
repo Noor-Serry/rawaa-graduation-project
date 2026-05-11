@@ -3,6 +3,6 @@ package noor.serry.rawaa.ui.screens.students
 interface StudentsInteractionListener {
     fun onSearchChange(query: String)
     fun onViewProfileClick(studentId: String)
-    fun onSendMessageClick(studentId: String)
-    fun onSendBulkMessageClick()
+    // Removed: onSendMessageClick — no per-student messaging endpoint in UniversityRepository
+    // Removed: onSendBulkMessageClick — no bulk messaging endpoint in UniversityRepository
 }

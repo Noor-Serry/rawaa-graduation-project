@@ -25,23 +25,21 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.graphics.Brush.Companion.verticalGradient
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import org.koin.compose.viewmodel.koinViewModel
 import noor.serry.designsystem.components.Icon
-import noor.serry.designsystem.components.LabelInputField
 import noor.serry.designsystem.components.Text
 import noor.serry.designsystem.components.utils.clickAnimation
 import noor.serry.designsystem.design.AppTheme
 import noor.serry.rawaa.R
+import noor.serry.rawaa.ui.navigation.teatcher.TeacherBackStackProvider
+import noor.serry.rawaa.ui.navigation.teatcher.TeacherRouteKeys
 
 @Composable
 fun StudentsScreen(
@@ -66,7 +64,7 @@ private fun StudentsContent(
             totalCount = state.totalCount,
             needsFollowUpCount = state.needsFollowUpCount,
             onBack = onBack,
-            onSendBulkMessage = interactionListener::onSendBulkMessageClick,
+            // Removed: onSendBulkMessage — no bulk messaging endpoint exists in the backend
         )
 
         // Search field
@@ -117,7 +115,7 @@ private fun StudentsContent(
                     StudentCard(
                         student = student,
                         onProfileClick = { interactionListener.onViewProfileClick(student.id) },
-                        onMessageClick = { interactionListener.onSendMessageClick(student.id) },
+                        // Removed: onMessageClick — no per-student messaging endpoint exists in the backend
                     )
                 }
                 item { Spacer(Modifier.height(16.dp)) }
@@ -131,7 +129,7 @@ private fun StudentsHeader(
     totalCount: Int,
     needsFollowUpCount: Int,
     onBack: () -> Unit,
-    onSendBulkMessage: () -> Unit,
+    // Removed: onSendBulkMessage — no bulk messaging endpoint exists in the backend
 ) {
     Box {
         Column(
@@ -153,12 +151,7 @@ private fun StudentsHeader(
                         Text(text = "$totalCount طالب  •  $needsFollowUpCount يحتاج متابعة", color = AppTheme.color.bgSecondary, style = AppTheme.textStyle.label.medium)
                     }
                 }
-                Box(
-                    modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(AppTheme.color.secondary)
-                        .clickAnimation { onSendBulkMessage() }.padding(horizontal = 12.dp, vertical = 6.dp)
-                ) {
-                    Text(text = "رسالة جماعية", color = AppTheme.color.primaryDark, style = AppTheme.textStyle.body.small.copy(fontWeight = FontWeight.Bold))
-                }
+                // Removed: "رسالة جماعية" button — no bulk messaging endpoint in UniversityRepository
             }
         }
     }
@@ -168,7 +161,7 @@ private fun StudentsHeader(
 private fun StudentCard(
     student: StudentUiModel,
     onProfileClick: () -> Unit,
-    onMessageClick: () -> Unit,
+    // Removed: onMessageClick — no per-student messaging endpoint in UniversityRepository
     modifier: Modifier = Modifier,
 ) {
     val statusColor = when (student.statusType) {
@@ -182,6 +175,7 @@ private fun StudentCard(
             .background(AppTheme.color.bg).border(1.17.dp, AppTheme.color.border, RoundedCornerShape(16.dp)).padding(17.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
+        // ── Identity row ─────────────────────────────────────────────────────
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Box(
                 modifier = Modifier.size(44.dp).clip(CircleShape).background(AppTheme.color.primary.copy(alpha = .15f)),
@@ -204,30 +198,46 @@ private fun StudentCard(
             }
         }
 
+        // ── Real data chips — only fields actually returned by StudentDto ────
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            StudentMiniStat("الحضور", "${student.attendance}%", modifier = Modifier.weight(1f))
-            StudentMiniStat("الدرجة", "${student.grade}%", modifier = Modifier.weight(1f))
-            StudentMiniStat("الواجبات", "${student.assignmentsSubmitted}/${student.totalAssignments}", modifier = Modifier.weight(1f))
+            // departmentName: String? — from StudentDto.department_name
+            StudentMiniStat(
+                label = "القسم",
+                value = student.departmentName ?: "—",
+                modifier = Modifier.weight(1f),
+            )
+            // level: Int? — from StudentDto.level
+            StudentMiniStat(
+                label = "المستوى",
+                value = student.level?.toString() ?: "—",
+                modifier = Modifier.weight(1f),
+            )
+            // gpa: String? — from StudentDto.gpa (raw server string, e.g. "3.75")
+            StudentMiniStat(
+                label = "المعدل",
+                value = student.gpa ?: "—",
+                modifier = Modifier.weight(1f),
+            )
         }
 
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Box(
-                modifier = Modifier.weight(1f).clip(RoundedCornerShape(12.dp))
-                    .border(1.17.dp, AppTheme.color.border, RoundedCornerShape(12.dp))
-                    .clickAnimation { onMessageClick() }.padding(vertical = 8.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(text = "رسالة", color = AppTheme.color.primaryDark, style = AppTheme.textStyle.body.small.copy(fontWeight = FontWeight.Bold))
-            }
-            Box(
-                modifier = Modifier.weight(1f).clip(RoundedCornerShape(12.dp))
-                    .background(AppTheme.color.primary)
-                    .clickAnimation { onProfileClick() }.padding(vertical = 8.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(text = "الملف الشخصي", color = AppTheme.color.bg, style = AppTheme.textStyle.body.small.copy(fontWeight = FontWeight.Bold))
-            }
+        // Removed second stat row:
+        //   الحضور (attendance) — StudentDto has no attendance field; was always "0%"
+        //   الدرجة (grade)      — was a synthetic (gpa/4)*100 Int, not a real grade field
+        //   الواجبات            — StudentDto has no assignments data; was always "0/0"
+
+        // ── Actions — only "View Profile" has a backend endpoint (GET /api/students/{id}) ──
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .background(AppTheme.color.primary)
+                .clickAnimation { onProfileClick() }
+                .padding(vertical = 8.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(text = "الملف الشخصي", color = AppTheme.color.bg, style = AppTheme.textStyle.body.small.copy(fontWeight = FontWeight.Bold))
         }
+        // Removed: "رسالة" (Message) button — no per-student messaging endpoint in UniversityRepository
     }
 }
 
@@ -241,12 +251,14 @@ private fun StudentMiniStat(label: String, value: String, modifier: Modifier = M
 
 @Composable
 private fun HandleEffects(effects: Flow<StudentsEffect>) {
+    val backstack = TeacherBackStackProvider.current
     LaunchedEffect(Unit) {
         effects.collectLatest { effect ->
             when (effect) {
-                is StudentsEffect.NavigateToStudentProfile -> { /* TODO */ }
-                is StudentsEffect.NavigateToSendMessage    -> { /* TODO */ }
-                StudentsEffect.NavigateToSendBulkMessage   -> { /* TODO */ }
+                is StudentsEffect.NavigateToStudentProfile -> {     backstack.add(TeacherRouteKeys.StudentProfile(studentId = effect.studentId.toInt()))
+                }
+                // Removed: NavigateToSendMessage — no messaging endpoint
+                // Removed: NavigateToSendBulkMessage — no bulk messaging endpoint
             }
         }
     }

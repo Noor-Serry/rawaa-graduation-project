@@ -2,6 +2,6 @@ package noor.serry.rawaa.ui.screens.students
 
 sealed interface StudentsEffect {
     data class NavigateToStudentProfile(val studentId: String) : StudentsEffect
-    data class NavigateToSendMessage(val studentId: String) : StudentsEffect
-    data object NavigateToSendBulkMessage : StudentsEffect
+    // Removed: NavigateToSendMessage — no per-student messaging endpoint in UniversityRepository
+    // Removed: NavigateToSendBulkMessage — no bulk messaging endpoint in UniversityRepository
 }
