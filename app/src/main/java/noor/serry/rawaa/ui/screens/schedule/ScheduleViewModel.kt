@@ -21,9 +21,13 @@ class ScheduleViewModel(
             // GET /api/schedules/my  → List<ScheduleSessionDto>
             action = { repository.getMySchedule().data ?: emptyList() },
             onSuccess = { sessions ->
-                val byDay = DayOfWeek.entries.associateWith { day ->
-                    sessions.filter { it.dayMatches(day) }.map { it.toSessionItem() }
-                }
+                val byDay = DayOfWeek.entries
+                    .filter { it != DayOfWeek.ALL }
+                    .associateWith { day ->
+                        sessions
+                            .filter { it.dayMatches(day) }
+                            .map { it.toSessionItem(day) }
+                    }
                 val uniqueCourses = sessions.mapNotNull { it.courseId }.toSet().size
                 val uniqueDays    = sessions.mapNotNull { it.day }.toSet().size
                 updateState {
@@ -43,10 +47,7 @@ class ScheduleViewModel(
 
     override fun onDaySelected(day: DayOfWeek) = updateState { it.copy(selectedDay = day) }
 
-    override fun onViewSessionDetails(courseCode: String) =
-        sendNewEffect(ScheduleEffect.NavigateToSessionDetails(courseCode))
-
-    // Removed: onViewFullWeekSchedule — ScheduleScreen already shows the full week
+    override fun onShowFullWeek() = updateState { it.copy(selectedDay = DayOfWeek.ALL) }
 }
 
 // ── Helpers & Mappers ─────────────────────────────────────────────────────────
@@ -61,10 +62,11 @@ private fun ScheduleSessionDto.dayMatches(day: DayOfWeek): Boolean {
         DayOfWeek.THURSDAY  -> dayStr == "thursday"
         DayOfWeek.FRIDAY    -> dayStr == "friday"
         DayOfWeek.SATURDAY  -> dayStr == "saturday"
+        DayOfWeek.ALL       -> false  // ALL is never used as a filter key
     }
 }
 
-private fun ScheduleSessionDto.toSessionItem() = SessionItem(
+private fun ScheduleSessionDto.toSessionItem(day: DayOfWeek) = SessionItem(
     courseCode    = code ?: "",
     courseName    = courseName ?: "",
     professorName = doctorName ?: "",
@@ -74,4 +76,5 @@ private fun ScheduleSessionDto.toSessionItem() = SessionItem(
         "lab" -> SessionType.LAB
         else  -> SessionType.LECTURE
     },
+    day = day,
 )

@@ -7,6 +7,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.zIndex
 import noor.serry.rawaa.ui.screens.studentScreens.menu.components.StudentHeader
 import noor.serry.rawaa.ui.screens.studentScreens.menu.components.StudentMenu
 import org.koin.androidx.compose.koinViewModel
@@ -29,7 +30,7 @@ fun MenuScreen(
         if (state.loggedOut) onLoggedOut()
     }
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(modifier = Modifier.fillMaxSize().zIndex(100f)) {
         // Top bar — shows app name and notification bell.
         // state.isOpen drives the hamburger-to-X rotation animation.
         StudentHeader(

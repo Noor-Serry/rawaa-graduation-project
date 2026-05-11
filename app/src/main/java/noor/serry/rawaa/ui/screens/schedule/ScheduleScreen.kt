@@ -61,7 +61,7 @@ private fun ScheduleContent(
     state: ScheduleUiState,
     interactionListener: ScheduleInteractionListener,
 ) {
-    val sessions = state.sessionsForSelectedDay
+    val isAllMode = state.selectedDay == DayOfWeek.ALL
 
     LazyColumn(
         modifier = Modifier
@@ -88,44 +88,109 @@ private fun ScheduleContent(
             )
         }
 
-        // ── 3. Session cards or empty state ───────────────────────
-        if (sessions.isEmpty()) {
-            item {
-                EmptyDayMessage()
+        if (isAllMode) {
+            // ── 3a. Full-week view: one section per day ───────────
+            val daysWithSessions = DayOfWeek.entries
+                .filter { it != DayOfWeek.ALL }
+                .mapNotNull { day ->
+                    val sessions = state.scheduleByDay[day]
+                    if (!sessions.isNullOrEmpty()) day to sessions else null
+                }
+
+            if (daysWithSessions.isEmpty()) {
+                item { EmptyDayMessage() }
+            } else {
+                daysWithSessions.forEach { (day, sessions) ->
+                    // Day section header
+                    item(key = "header_${day.name}") {
+                        DaySectionHeader(
+                            day = day,
+                            sessionCount = sessions.size,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                        )
+                    }
+                    // Session cards for that day
+                    items(
+                        items = sessions,
+                        key = { "${day.name}_${it.courseCode}_${it.timeRange}" }
+                    ) { session ->
+                        SessionCard(
+                            item = session,
+                            modifier = Modifier
+                                .padding(horizontal = 16.dp, vertical = 4.dp)
+                        )
+                    }
+                }
             }
         } else {
-            items(
-                items = sessions,
-                key = { it.courseCode + it.timeRange }
-            ) { session ->
-                SessionCard(
-                    item = session,
-                    modifier = Modifier
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
-                )
+            // ── 3b. Single-day view ────────────────────────────────
+            val sessions = state.sessionsForSelectedDay
+            if (sessions.isEmpty()) {
+                item { EmptyDayMessage() }
+            } else {
+                items(
+                    items = sessions,
+                    key = { it.courseCode + it.timeRange }
+                ) { session ->
+                    SessionCard(
+                        item = session,
+                        modifier = Modifier
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                    )
+                }
+
+                // ── 4. Full week CTA button (only in single-day mode) ──
+                item {
+                    BaseButton(
+                        text = "عرض الجدول الأسبوعي الكامل",
+                        onClick = interactionListener::onShowFullWeek,
+                        icon = painterResource(R.drawable.ic_calendar),
+                        backgroundColor = Color.Transparent,
+                        textColor = AppTheme.color.primary,
+                        iconColor = AppTheme.color.primary,
+                        borderColor = AppTheme.color.primary,
+                        borderWidth = 1.17.dp,
+                        roundedCornerSize = 16.dp,
+                        modifier = Modifier.padding(24.dp),
+                        textStyle = AppTheme.textStyle.body.medium.copy(
+                            fontWeight = FontWeight.Bold
+                        )
+                    )
+                }
             }
         }
+    }
+}
 
-        // ── 4. Full week CTA button ────────────────────────────────
-        if (sessions.isNotEmpty())
-            item {
-            BaseButton(
-                text = "عرض الجدول الأسبوعي الكامل",
-                onClick = {},
-                icon = painterResource(R.drawable.ic_calendar), // غير الاسم على حسب الـ drawable عندك
-                backgroundColor = Color.Transparent,
-                textColor = AppTheme.color.primary,
-                iconColor = AppTheme.color.primary,
-                borderColor = AppTheme.color.primary,
-                borderWidth = 1.17.dp,
-                roundedCornerSize = 16.dp,
-                modifier = Modifier.padding(24.dp),
-                textStyle = AppTheme.textStyle.body.medium.copy(
-                    fontWeight = FontWeight
-                        .Bold
-                )
+// ── Day section header (used in ALL mode) ─────────────────────────────────────
+
+@Composable
+private fun DaySectionHeader(
+    day: DayOfWeek,
+    sessionCount: Int,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(
+                color = AppTheme.color.primary.copy(alpha = 0.08f),
+                shape = RoundedCornerShape(12.dp)
             )
-        }
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Text(
+            text = day.label,
+            color = AppTheme.color.primary,
+            style = AppTheme.textStyle.body.medium.copy(fontWeight = FontWeight.Bold),
+        )
+        Text(
+            text = "$sessionCount ${if (sessionCount == 1) "محاضرة" else "محاضرات"}",
+            color = AppTheme.color.textSecondary,
+            style = AppTheme.textStyle.label.medium,
+        )
     }
 }
 
@@ -294,6 +359,7 @@ private fun DaySelector(
         }
     }
 }
+
 // ── Empty state ───────────────────────────────────────────────────────────────
 
 @Composable
@@ -322,10 +388,6 @@ private fun HandleEffects(
     LaunchedEffect(Unit) {
         effects.collectLatest { effect ->
             when (effect) {
-//                is ScheduleEffect.NavigateToSessionDetails ->
-//                    navigationBackStack.add(AppRoute.SessionDetails(effect.courseCode))
-//                ScheduleEffect.NavigateToFullWeekSchedule ->
-//                    navigationBackStack.add(AppRoute.FullWeekSchedule)
                 else -> {}
             }
         }

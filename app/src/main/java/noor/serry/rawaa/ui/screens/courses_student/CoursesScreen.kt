@@ -202,10 +202,13 @@ private fun HandleEffects(
                         isSuccess = true
                     ))
 
-                is CoursesEffect.ShowErrorMessage ->  SnackBarUiMessage(
+                is CoursesEffect.ShowErrorMessage ->
+                    SnackBarManager.show(
+                    SnackBarUiMessage(
                     messageRes = effect.message,
                     isSuccess = false
                 )
+                    )
             }
         }
     }

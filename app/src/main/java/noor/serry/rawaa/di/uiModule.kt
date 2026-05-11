@@ -9,6 +9,7 @@ import noor.serry.rawaa.ui.screens.grading.GradingViewModel
 import noor.serry.rawaa.ui.screens.home_student.HomeStudentViewModel
 import noor.serry.rawaa.ui.screens.home_teacher.HomeTeacherViewModel
 import noor.serry.rawaa.ui.screens.login.LoginViewModel
+import noor.serry.rawaa.ui.screens.notifications.NotificationsViewModel
 import noor.serry.rawaa.ui.screens.onboarding.OnboardingViewModel
 import noor.serry.rawaa.ui.screens.profile_student.ProfileViewModel
 import noor.serry.rawaa.ui.screens.profile_teacher.ProfileTeacherViewModel
@@ -36,6 +37,7 @@ val uiModule = module {
     viewModelOf(::ProfileViewModel)
     viewModelOf(::ProfileTeacherViewModel)
     viewModelOf(::MenuViewModel)
+    viewModelOf(::NotificationsViewModel)
 
     singleOf(::MainViewModel)
 }

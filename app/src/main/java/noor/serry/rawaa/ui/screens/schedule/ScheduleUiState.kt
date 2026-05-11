@@ -10,7 +10,14 @@ data class ScheduleUiState(
     val errorMessage: String? = null,
 ) {
     val sessionsForSelectedDay: List<SessionItem>
-        get() = scheduleByDay[selectedDay] ?: emptyList()
+        get() = if (selectedDay == DayOfWeek.ALL) {
+            scheduleByDay
+                .filterKeys { it != DayOfWeek.ALL }
+                .values
+                .flatten()
+        } else {
+            scheduleByDay[selectedDay] ?: emptyList()
+        }
 }
 
 enum class DayOfWeek(val label: String, val shortLabel: String) {
@@ -21,6 +28,7 @@ enum class DayOfWeek(val label: String, val shortLabel: String) {
     THURSDAY("الخميس", "خ"),
     FRIDAY("الجمعة", "ج"),
     SATURDAY("السبت", "س"),
+    ALL("الكل", "الكل")
 }
 
 data class SessionItem(
@@ -30,6 +38,7 @@ data class SessionItem(
     val location: String,
     val timeRange: String,
     val type: SessionType,
+    val day: DayOfWeek? = null,   // populated when building scheduleByDay; used for ALL-mode grouping
 )
 
 enum class SessionType(val label: String) {
