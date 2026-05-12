@@ -1,4 +1,4 @@
-package noor.serry.rawaa.ui.navigation.admin
+package noor.serry.rawaa.ui.navigation.super_admin
 
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey

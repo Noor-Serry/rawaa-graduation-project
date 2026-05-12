@@ -1,4 +1,4 @@
-package noor.serry.rawaa.ui.navigation.admin
+package noor.serry.rawaa.ui.navigation.super_admin
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*

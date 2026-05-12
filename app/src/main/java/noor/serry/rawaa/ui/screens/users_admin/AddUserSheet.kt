@@ -27,7 +27,7 @@ import noor.serry.designsystem.components.LabelInputField
 import noor.serry.designsystem.components.Text
 import noor.serry.designsystem.design.AppTheme
 import noor.serry.rawaa.R
-import noor.serry.rawaa.ui.navigation.admin.AdminBackStackProvider
+import noor.serry.rawaa.ui.navigation.super_admin.AdminBackStackProvider
 import org.koin.androidx.compose.koinViewModel
 
 // ─────────────────────────────────────────────────────────────────────────────

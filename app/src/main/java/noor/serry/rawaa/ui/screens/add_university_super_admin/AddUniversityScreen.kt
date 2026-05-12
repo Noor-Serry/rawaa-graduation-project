@@ -21,8 +21,8 @@ import noor.serry.designsystem.components.Text
 import noor.serry.designsystem.components.utils.clickAnimation
 import noor.serry.designsystem.design.AppTheme
 import noor.serry.rawaa.R
-import noor.serry.rawaa.ui.navigation.admin.AdminBackStackProvider
-import noor.serry.rawaa.ui.navigation.admin.AdminRouteKeys
+import noor.serry.rawaa.ui.navigation.super_admin.AdminBackStackProvider
+import noor.serry.rawaa.ui.navigation.super_admin.AdminRouteKeys
 import noor.serry.rawaa.ui.screens.universities_super_admin.UniversitiesUiState
 import noor.serry.rawaa.ui.screens.universities_super_admin.UniversityFormContent
 import org.koin.androidx.compose.koinViewModel

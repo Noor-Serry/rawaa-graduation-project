@@ -7,7 +7,7 @@ import noor.serry.rawaa.ui.screens.login.LoginScreen
 import noor.serry.rawaa.ui.screens.onboarding.OnboardingScreen
 import noor.serry.rawaa.ui.navigation.student.StudentEntryPoint
 import noor.serry.rawaa.ui.navigation.teatcher.TeacherEntryPoint
-import noor.serry.rawaa.ui.navigation.admin.AdminEntryPoint
+import noor.serry.rawaa.ui.navigation.super_admin.AdminEntryPoint
 
 val appEntryProvider: (NavKey) -> NavEntry<NavKey> = entryProvider {
     entry<AppRoute.Login> {
