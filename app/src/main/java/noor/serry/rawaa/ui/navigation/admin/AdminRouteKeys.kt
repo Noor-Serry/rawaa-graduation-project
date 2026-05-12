@@ -8,7 +8,8 @@ sealed interface AdminRouteKeys : NavKey {
 
     @Serializable
     data object Home : AdminRouteKeys
-
+    @Serializable
+    data object University : AdminRouteKeys
     @Serializable
     data object Users : AdminRouteKeys
 
@@ -19,7 +20,7 @@ sealed interface AdminRouteKeys : NavKey {
     data object Reports : AdminRouteKeys
 
     @Serializable
-    data class AddUser () : AdminRouteKeys
+    data object AddUser  : AdminRouteKeys
     @Serializable
     data object Settings : AdminRouteKeys
 

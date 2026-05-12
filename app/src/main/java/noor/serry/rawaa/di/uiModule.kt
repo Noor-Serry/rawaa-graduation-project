@@ -7,8 +7,8 @@ import noor.serry.rawaa.ui.screens.courses_admin.CoursesAdminViewModel
 import noor.serry.rawaa.ui.screens.courses_student.CoursesViewModel
 import noor.serry.rawaa.ui.screens.courses_teacher.CoursesTeacherViewModel
 import noor.serry.rawaa.ui.screens.grading_teacher.GradingViewModel
-import noor.serry.rawaa.ui.screens.home_admin.HomeAdminViewModel
 import noor.serry.rawaa.ui.screens.home_student.HomeStudentViewModel
+import noor.serry.rawaa.ui.screens.home_super_admin.HomeSuperAdminViewModel
 import noor.serry.rawaa.ui.screens.home_teacher.HomeTeacherViewModel
 import noor.serry.rawaa.ui.screens.login.LoginViewModel
 import noor.serry.rawaa.ui.screens.notifications.NotificationsViewModel
@@ -21,6 +21,7 @@ import noor.serry.rawaa.ui.screens.settings_admin.SettingsAdminViewModel
 import noor.serry.rawaa.ui.screens.studentScreens.menu.MenuViewModel
 import noor.serry.rawaa.ui.screens.student_profile_teacher.StudentProfileViewModel
 import noor.serry.rawaa.ui.screens.students_teacher.StudentsViewModel
+import noor.serry.rawaa.ui.screens.universities_super_admin.UniversitiesViewModel
 import noor.serry.rawaa.ui.screens.users_admin.AddUserViewModel
 import noor.serry.rawaa.ui.screens.users_admin.UsersAdminViewModel
 import org.koin.core.module.dsl.singleOf
@@ -52,12 +53,13 @@ val uiModule = module {
     viewModelOf(::StudentProfileViewModel)
 
     // ── Admin screens ─────────────────────────────────────────────────────────
-    viewModelOf(::HomeAdminViewModel)
+    viewModelOf(::HomeSuperAdminViewModel)
     viewModelOf(::UsersAdminViewModel)
     viewModelOf(::CoursesAdminViewModel)
     viewModelOf(::ReportsAdminViewModel)
     viewModelOf(::SettingsAdminViewModel)
     viewModelOf(::AddUserViewModel)
+    viewModelOf(::UniversitiesViewModel)
     // ── Shared ────────────────────────────────────────────────────────────────
     singleOf(::MainViewModel)
 }

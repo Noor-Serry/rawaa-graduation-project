@@ -105,14 +105,14 @@ class UsersAdminViewModel(
         updateState { it.copy(pendingDeleteId = null, pendingDeleteType = null) }
     }
 
-    // ── Add-user navigation ───────────────────────────────────────────────────
+    // ── Add-user sheet ────────────────────────────────────────────────────────
 
     override fun onAddUserClicked() {
         sendNewNavigationEffect(UsersAdminEffect.NavigateToAddUser)
     }
 
     override fun onAddUserDismissed() {
-        // No-op: sheet is now a separate screen; kept in interface for compatibility
+        updateState { it.copy(showAddUserSheet = false) }
     }
 }
 
@@ -155,5 +155,3 @@ private fun EmployeeDto.toUserItem(): UsersAdminUiState.UserItem {
     )
 }
 
-private fun DepartmentDto.toDepartmentFilterItem() =
-    UsersAdminUiState.DepartmentFilterItem(id = id, name = name)

@@ -33,6 +33,8 @@ data class UsersAdminUiState(
     /** Set when the delete-confirmation dialog should be shown */
     val pendingDeleteId: Int? = null,
     val pendingDeleteType: UserType? = null,
+    /** Whether the Add-User bottom sheet is open */
+    val showAddUserSheet: Boolean = false,
 ) {
 
     // ── Computed stats (matches the 4-chip header row in the design) ──────────

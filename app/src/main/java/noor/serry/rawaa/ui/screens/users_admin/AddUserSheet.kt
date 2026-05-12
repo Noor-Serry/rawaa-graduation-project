@@ -27,97 +27,105 @@ import noor.serry.designsystem.components.LabelInputField
 import noor.serry.designsystem.components.Text
 import noor.serry.designsystem.design.AppTheme
 import noor.serry.rawaa.R
+import noor.serry.rawaa.ui.navigation.admin.AdminBackStackProvider
 import org.koin.androidx.compose.koinViewModel
-import org.koin.core.parameter.parametersOf
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Public entry-point
+// Public entry-point  (was: AddUserSheet – ModalBottomSheet)
+// Now rendered as a full screen via the back-stack navigation layer.
 // ─────────────────────────────────────────────────────────────────────────────
 
-/**
- * Add-User bottom sheet backed by its own [AddUserViewModel].
- *
- * The sheet owns its form state via [AddUserUiState] and interacts with the
- * parent screen only through two callbacks:
- *   • [onDismiss]        – sheet should be hidden (cancel or successful submit)
- *   • [onUserCreated]    – called after a successful API response so the list
- *                          screen can refresh its data.
- *
- * @param departments   Pre-fetched list passed from [UsersAdminUiState] so the
- *                      sheet ViewModel does not fetch it independently.
- */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddUserSheet(
-    departments: List<UsersAdminUiState.DepartmentFilterItem>,
-    onDismiss: () -> Unit,
-    onUserCreated: (message: String) -> Unit = {},
-    viewModel: AddUserViewModel = koinViewModel(
-        parameters = { parametersOf(departments) },
-    ),
+fun AddUserScreen(
+    viewModel: AddUserViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    val backStack = AdminBackStackProvider.current
 
     // ── Effect handler ────────────────────────────────────────────────────────
     LaunchedEffect(Unit) {
         viewModel.effect.collectLatest { effect ->
             when (effect) {
-                is AddUserEffect.UserCreatedSuccessfully -> {
-                    onUserCreated(effect.message)
-                    onDismiss()
-                }
-                is AddUserEffect.ShowError -> { /* parent snackbar / toast */ }
-                is AddUserEffect.Dismissed -> onDismiss()
+                is AddUserEffect.UserCreatedSuccessfully -> backStack.removeLastOrNull()
+                is AddUserEffect.ShowError               -> { /* parent snackbar / toast */ }
+                is AddUserEffect.Dismissed               -> backStack.removeLastOrNull()
             }
         }
     }
 
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-
-    ModalBottomSheet(
-        onDismissRequest  = viewModel::onDismissClicked,
-        sheetState        = sheetState,
-        containerColor    = AppTheme.color.bg,
-        shape             = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
-        dragHandle        = {
-            Box(
-                modifier = Modifier
-                    .padding(top = 12.dp, bottom = 4.dp)
-                    .size(width = 40.dp, height = 4.dp)
-                    .clip(RoundedCornerShape(2.dp))
-                    .background(AppTheme.color.border),
-            )
+    // ── Full-screen scaffold with top bar ─────────────────────────────────────
+    Scaffold(
+        containerColor = AppTheme.color.bg,
+        topBar = {
+            AddUserTopBar(onNavigateUp = viewModel::onDismissClicked)
         },
-    ) {
-        AddUserSheetContent(state = state, listener = viewModel)
+    ) { innerPadding ->
+        AddUserContent(
+            state    = state,
+            listener = viewModel,
+            modifier = Modifier.padding(innerPadding),
+        )
+    }
+
+    // ── Department picker dialog ───────────────────────────────────────────────
+    if (state.showDepartmentPicker) {
+        DepartmentPickerDialog(
+            departments = state.availableDepartments,
+            onSelected  = viewModel::onDepartmentSelected,
+            onDismiss   = viewModel::onDepartmentPickerDismissed,
+        )
     }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Sheet content  (purely driven by [AddUserUiState] + [AddUserInteractionListener])
+// Top app bar
+// ─────────────────────────────────────────────────────────────────────────────
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AddUserTopBar(onNavigateUp: () -> Unit) {
+    TopAppBar(
+        title = {
+            Text(
+                text  = "إضافة مستخدم جديد",
+                color = AppTheme.color.primaryDark,
+                style = AppTheme.textStyle.headline.small,
+            )
+        },
+        navigationIcon = {
+            IconButton(onClick = onNavigateUp) {
+                Icon(
+                    painter            = painterResource(R.drawable.ic_arrow_forward),
+                    contentDescription = "رجوع",
+                    tint               = AppTheme.color.primaryDark,
+                )
+            }
+        },
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = AppTheme.color.bg,
+        ),
+    )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Screen content  (same form, adapted for full-screen layout)
 // ─────────────────────────────────────────────────────────────────────────────
 
 @Composable
-private fun AddUserSheetContent(
+private fun AddUserContent(
     state: AddUserUiState,
     listener: AddUserInteractionListener,
+    modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .navigationBarsPadding()
+        modifier = modifier
+            .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp)
-            .padding(bottom = 24.dp),
+            .padding(bottom = 32.dp),
         verticalArrangement = Arrangement.spacedBy(0.dp),
     ) {
-        // ── Sheet title ───────────────────────────────────────────────────────
-        Text(
-            text     = "إضافة مستخدم جديد",
-            color    = AppTheme.color.primaryDark,
-            style    = AppTheme.textStyle.headline.small,
-            modifier = Modifier.padding(top = 8.dp, bottom = 20.dp),
-        )
+        Spacer(Modifier.height(8.dp))
 
         // ── Role selector ─────────────────────────────────────────────────────
         Text(
@@ -267,26 +275,17 @@ private fun AddUserSheetContent(
             text              = if (state.isSubmitting) "جاري الإضافة..." else "إضافة المستخدم",
             onClick           = listener::onSubmitClicked,
             roundedCornerSize = 10.dp,
-            isEnable           = !state.isSubmitting,
+            isEnable          = !state.isSubmitting,
         )
         Spacer(Modifier.height(10.dp))
         BaseButton(
-            text              = "إلغاء",
-            onClick           = listener::onDismissClicked,
+            text            = "إلغاء",
+            onClick         = listener::onDismissClicked,
             roundedCornerSize = 10.dp,
-            backgroundColor   = AppTheme.color.bgHover,
-            textColor         = AppTheme.color.textSecondary,
-            borderColor       = AppTheme.color.border,
-            borderWidth       = 1.dp,
-        )
-    }
-
-    // ── Department picker dialog ───────────────────────────────────────────────
-    if (state.showDepartmentPicker) {
-        DepartmentPickerDialog(
-            departments = state.availableDepartments,
-            onSelected  = listener::onDepartmentSelected,
-            onDismiss   = listener::onDepartmentPickerDismissed,
+            backgroundColor = AppTheme.color.bgHover,
+            textColor       = AppTheme.color.textSecondary,
+            borderColor     = AppTheme.color.border,
+            borderWidth     = 1.dp,
         )
     }
 }

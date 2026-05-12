@@ -1,5 +1,6 @@
 package noor.serry.rawaa.ui.screens.users_admin
 
+import noor.serry.rawaa.data.dto.DepartmentDto
 import noor.serry.rawaa.data.dto.DoctorRegisterRequest
 import noor.serry.rawaa.data.dto.StudentRegisterRequest
 import noor.serry.rawaa.data.repository.UniversityRepository
@@ -21,18 +22,36 @@ import noor.serry.rawaa.ui.base.DispatcherProvider
  *
  * @param repository    Data source; injected via Koin / Hilt.
  * @param dispatchers   Thread dispatcher provider (IO / Main / Default).
- * @param departments   Pre-fetched department list passed in at creation time
- *                      from [UsersAdminUiState.departments] so the sheet does
- *                      not need to re-fetch it independently.
  */
 class AddUserViewModel(
     private val repository: UniversityRepository,
     private val dispatchers: DispatcherProvider,
-    departments: List<UsersAdminUiState.DepartmentFilterItem> = emptyList(),
 ) : BaseViewModel<AddUserUiState, AddUserEffect>(
-    initialState      = AddUserUiState(availableDepartments = departments),
+    initialState      = AddUserUiState(),
     dispatcherProvider = dispatchers,
 ), AddUserInteractionListener {
+
+    // ── Init – load departments ───────────────────────────────────────────────
+
+    init {
+        loadDepartments()
+    }
+
+    private fun loadDepartments() {
+        tryToExecute(
+            action     = { repository.getDepartments() },
+            onSuccess  = { response ->
+                val items = response.data
+                    ?.map { it.toDepartmentFilterItem() }
+                    ?: emptyList()
+                updateState { it.copy(availableDepartments = items) }
+            },
+            onError    = { e ->
+                updateState { it.copy(errorMessage = e.message ?: "فشل تحميل الأقسام") }
+            },
+            dispatcher = dispatchers.IO,
+        )
+    }
 
     // ── Role ──────────────────────────────────────────────────────────────────
 

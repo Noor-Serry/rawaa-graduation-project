@@ -34,6 +34,7 @@ import noor.serry.designsystem.components.Icon
 import noor.serry.designsystem.components.Text
 import noor.serry.designsystem.components.utils.clickAnimation
 import noor.serry.designsystem.design.AppTheme
+import noor.serry.rawaa.BackStackProvider
 import noor.serry.rawaa.R
 import noor.serry.rawaa.ui.navigation.admin.AdminBackStackProvider
 import noor.serry.rawaa.ui.navigation.admin.AdminRouteKeys
@@ -80,6 +81,7 @@ fun UsersAdminScreen(
             onDismiss = viewModel::onDeleteDismissed,
         )
     }
+
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -857,8 +859,8 @@ private fun HandleEffects(effects: Flow<UsersAdminEffect>) {
     LaunchedEffect(Unit) {
         effects.collectLatest { effect ->
             when (effect) {
-                is UsersAdminEffect.NavigateToAddUser                -> backStack.add(AdminRouteKeys.)
                 is UsersAdminEffect.NavigateToStudentDetail  -> { /* backStack.add(AppRoute.StudentDetail(effect.studentId)) */ }
+                is UsersAdminEffect.NavigateToAddUser   -> {  backStack.add(AdminRouteKeys.AddUser)  }
                 is UsersAdminEffect.NavigateToEmployeeDetail -> { /* backStack.add(AppRoute.EmployeeDetail(effect.employeeId)) */ }
                 is UsersAdminEffect.ShowDeleteSuccess        -> { /* show toast/snackbar */ }
                 is UsersAdminEffect.ShowError                -> { /* show toast/snackbar */ }
