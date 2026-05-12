@@ -65,7 +65,7 @@ fun HomeSuperAdminScreen(
     HandleEffects(
         effects                    = viewModel.effect,
         onNavigateToUniversities   = {
-            backstack.add(AdminRouteKeys.University)
+            backstack.add(AdminRouteKeys.Universities)
         },
         onNavigateToCreateUniversity = {},
         onNavigateToSettings       = {},

@@ -8,35 +8,10 @@ sealed interface AdminRouteKeys : NavKey {
 
     @Serializable
     data object Home : AdminRouteKeys
-    @Serializable
-    data object University : AdminRouteKeys
-    @Serializable
-    data object Users : AdminRouteKeys
 
     @Serializable
-    data object Courses : AdminRouteKeys
+    data object Universities : AdminRouteKeys
 
     @Serializable
-    data object Reports : AdminRouteKeys
-
-    @Serializable
-    data object AddUser  : AdminRouteKeys
-    @Serializable
-    data object Settings : AdminRouteKeys
-
-    // Legacy alias kept for compatibility with existing AdminNavTab enum
-    // AdminNavTab.DEPARTMENTS → navigates to Users tab (user management)
-    // AdminNavTab.EMPLOYEES   → navigates to Users tab (user management)
-    // AdminNavTab.PROFILE     → navigates to Settings tab
-    @Deprecated("Use Users", replaceWith = ReplaceWith("Users"))
-    @Serializable
-    data object Departments : AdminRouteKeys
-
-    @Deprecated("Use Users", replaceWith = ReplaceWith("Users"))
-    @Serializable
-    data object Employees : AdminRouteKeys
-
-    @Deprecated("Use Settings", replaceWith = ReplaceWith("Settings"))
-    @Serializable
-    data object Profile : AdminRouteKeys
+    data object AddUniversity : AdminRouteKeys
 }

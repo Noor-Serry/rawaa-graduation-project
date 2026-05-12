@@ -860,7 +860,7 @@ private fun HandleEffects(effects: Flow<UsersAdminEffect>) {
         effects.collectLatest { effect ->
             when (effect) {
                 is UsersAdminEffect.NavigateToStudentDetail  -> { /* backStack.add(AppRoute.StudentDetail(effect.studentId)) */ }
-                is UsersAdminEffect.NavigateToAddUser   -> {  backStack.add(AdminRouteKeys.AddUser)  }
+                is UsersAdminEffect.NavigateToAddUser   -> {    }
                 is UsersAdminEffect.NavigateToEmployeeDetail -> { /* backStack.add(AppRoute.EmployeeDetail(effect.employeeId)) */ }
                 is UsersAdminEffect.ShowDeleteSuccess        -> { /* show toast/snackbar */ }
                 is UsersAdminEffect.ShowError                -> { /* show toast/snackbar */ }

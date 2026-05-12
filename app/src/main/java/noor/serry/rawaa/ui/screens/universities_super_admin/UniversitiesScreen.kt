@@ -381,7 +381,7 @@ private fun FilterChip(
             .border(
                 width = 1.dp,
                 color = if (selected) AppTheme.color.primary
-                        else AppTheme.color.border,
+                else AppTheme.color.border,
                 shape = RoundedCornerShape(20.dp),
             )
             .clickAnimation(onClick)
@@ -433,7 +433,7 @@ private fun UniversityManagementCard(
             // Expand indicator
             Icon(
                 painter  = painterResource(
-                    if (isSelected) noor.serry.designsystem.R.drawable.mail else R.drawable.badge
+                    if (isSelected) R.drawable.arrow_up else R.drawable.arrow_down
                 ),
                 tint     = AppTheme.color.textSecondary,
                 modifier = Modifier.size(18.dp),
@@ -482,42 +482,62 @@ private fun UniversityManagementCard(
         HorizontalDivider(color = AppTheme.color.border.copy(alpha = .5f))
 
         // ── Row 3: action buttons ─────────────────────────────────────────────
-        Row(
-            modifier              = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End,
-            verticalAlignment     = Alignment.CenterVertically,
-        ) {
-            if (isActionLoading) {
+        if (isActionLoading) {
+            Box(
+                modifier         = Modifier.fillMaxWidth().height(36.dp),
+                contentAlignment = Alignment.Center,
+            ) {
                 CircularProgressIndicator(
-                    modifier = Modifier.size(20.dp),
-                    color    = AppTheme.color.primary,
+                    modifier    = Modifier.size(20.dp),
+                    color       = AppTheme.color.primary,
                     strokeWidth = 2.dp,
                 )
-            } else {
-                // Edit
-                ActionIconButton(
-                    iconRes = R.drawable.badge,
-                    tint    = Color(0xFF3B82F6),
-                    onClick = { listener.onEditUniversityClick(university.id) },
+            }
+        } else {
+            // Top row: Update + Change Plan
+            Row(
+                modifier              = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                // Update
+                ActionLabelButton(
+                    modifier = Modifier.weight(1f),
+                    label    = "تعديل الجامعة",
+                    iconRes  = R.drawable.university,
+                    tint     = Color(0xFF3B82F6),
+                    onClick  = { listener.onEditUniversityClick(university.id) },
                 )
-                Spacer(Modifier.width(8.dp))
-                // Change plan
-                ActionIconButton(
-                    iconRes = R.drawable.shield,
-                    tint    = Color(0xFF7C3AED),
-                    onClick = { listener.onChangePlanClick(university.id) },
+                // Change Plan
+                ActionLabelButton(
+                    modifier = Modifier.weight(1f),
+                    label    = "تغيير الخطة",
+                    iconRes  = R.drawable.shield,
+                    tint     = Color(0xFF7C3AED),
+                    onClick  = { listener.onChangePlanClick(university.id) },
                 )
-                Spacer(Modifier.width(8.dp))
-                // Activate / Deactivate
-                ActionIconButton(
-                    iconRes = R.drawable.ic_trending_up,
-                    tint    = if (university.isActiveBool) Color(0xFFEF4444) else Color(0xFF22C55E),
-                    onClick = {
-                        if (university.isActiveBool)
-                            listener.onDeactivateUniversity(university.id)
-                        else
-                            listener.onActivateUniversity(university.id)
-                    },
+            }
+            // Bottom row: Activate / Deactivate
+            Row(
+                modifier              = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                // Activate
+                ActionLabelButton(
+                    modifier = Modifier.weight(1f),
+                    label    = "تفعيل",
+                    iconRes  = R.drawable.ic_trending_up,
+                    tint     = Color(0xFF22C55E),
+                    enabled  = !university.isActiveBool,
+                    onClick  = { listener.onActivateUniversity(university.id) },
+                )
+                // Deactivate
+                ActionLabelButton(
+                    modifier = Modifier.weight(1f),
+                    label    = "إيقاف",
+                    iconRes  = R.drawable.arrow_down,
+                    tint     = Color(0xFFEF4444),
+                    enabled  = university.isActiveBool,
+                    onClick  = { listener.onDeactivateUniversity(university.id) },
                 )
             }
         }
@@ -556,6 +576,52 @@ private fun ActionIconButton(
             painter  = painterResource(iconRes),
             tint     = tint,
             modifier = Modifier.size(16.dp),
+        )
+    }
+}
+
+@Composable
+private fun ActionLabelButton(
+    label: String,
+    iconRes: Int,
+    tint: Color,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+) {
+    val effectiveTint = if (enabled) tint else AppTheme.color.textSecondary.copy(alpha = .4f)
+    val effectiveBg   = effectiveTint.copy(alpha = .08f)
+
+    Row(
+        modifier = modifier
+            .clip(RoundedCornerShape(10.dp))
+            .background(effectiveBg)
+            .border(
+                width = 1.dp,
+                color = effectiveTint.copy(alpha = .25f),
+                shape = RoundedCornerShape(10.dp),
+            )
+            .then(
+                if (enabled) Modifier.clickAnimation(onClick)
+                else Modifier
+            )
+            .padding(horizontal = 10.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
+        verticalAlignment     = Alignment.CenterVertically,
+    ) {
+        Text(
+            text  = label,
+            color = effectiveTint,
+            style = AppTheme.textStyle.label.small.copy(
+                fontWeight = FontWeight.SemiBold,
+                fontSize   = 11.sp,
+            ),
+            maxLines = 1,
+        )
+        Icon(
+            painter  = painterResource(iconRes),
+            tint     = effectiveTint,
+            modifier = Modifier.size(14.dp),
         )
     }
 }
@@ -838,7 +904,7 @@ private fun UniversityEditSheet(
 // ─────────────────────────────────────────────────────────────────────────────
 
 @Composable
-private fun UniversityFormContent(
+fun UniversityFormContent(
     title: String,
     form: UniversitiesUiState.UniversityFormState,
     isCreate: Boolean,
@@ -861,8 +927,8 @@ private fun UniversityFormContent(
     onAdminPassword: (String) -> Unit,
 ) {
     androidx.compose.foundation.lazy.LazyColumn(
-        modifier        = Modifier.padding(horizontal = 20.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
+        contentPadding = androidx.compose.foundation.layout.PaddingValues( 16.dp),
     ) {
         item {
             Text(
@@ -990,7 +1056,7 @@ private fun FormField(
                 .border(
                     width = 1.dp,
                     color = if (error != null) Color(0xFFEF4444).copy(alpha = .5f)
-                            else AppTheme.color.border,
+                    else AppTheme.color.border,
                     shape = RoundedCornerShape(10.dp),
                 )
                 .padding(12.dp),

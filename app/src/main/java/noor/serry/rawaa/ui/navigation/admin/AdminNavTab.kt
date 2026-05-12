@@ -17,7 +17,7 @@ import noor.serry.designsystem.design.AppTheme
 import noor.serry.rawaa.R
 
 enum class AdminNavTab {
-    HOME, USERS, COURSES, REPORTS, SETTINGS
+    HOME, UNIVERSITIES, ADD_UNIVERSITY
 }
 
 data class AdminBottomNavItem(
@@ -34,17 +34,30 @@ fun HomeAdminBottomNav(
     modifier: Modifier = Modifier,
 ) {
     val items = listOf(
-        AdminBottomNavItem(AdminNavTab.HOME,     R.drawable.ic_home,       R.string.nav_home,      AdminRouteKeys.Home),
-        AdminBottomNavItem(AdminNavTab.USERS,    R.drawable.ic_person,     R.string.admin,     AdminRouteKeys.Users),
-        AdminBottomNavItem(AdminNavTab.COURSES,  R.drawable.ic_book,       R.string.nav_courses,   AdminRouteKeys.Courses),
-        AdminBottomNavItem(AdminNavTab.REPORTS,  R.drawable.badge,         R.string.nav_reports,   AdminRouteKeys.Reports),
-        AdminBottomNavItem(AdminNavTab.SETTINGS, R.drawable.person,        R.string.admin,  AdminRouteKeys.Settings),
+        AdminBottomNavItem(
+            tab      = AdminNavTab.HOME,
+            iconRes  = R.drawable.ic_home,
+            labelRes = R.string.nav_home,
+            route    = AdminRouteKeys.Home,
+        ),
+        AdminBottomNavItem(
+            tab      = AdminNavTab.UNIVERSITIES,
+            iconRes  = R.drawable.university,      // add this drawable to your res
+            labelRes = R.string.nav_universities,     // add this string resource
+            route    = AdminRouteKeys.Universities,
+        ),
+        AdminBottomNavItem(
+            tab      = AdminNavTab.ADD_UNIVERSITY,
+            iconRes  = R.drawable.outline_add_home_work_24,  // add this drawable to your res
+            labelRes = R.string.add_university,   // add this string resource
+            route    = AdminRouteKeys.AddUniversity,
+        ),
     )
 
     Surface(
-        modifier = modifier.fillMaxWidth(),
+        modifier      = modifier.fillMaxWidth(),
         shadowElevation = 12.dp,
-        color = Color.White,
+        color         = Color.White,
     ) {
         Row(
             modifier = Modifier
@@ -52,7 +65,7 @@ fun HomeAdminBottomNav(
                 .navigationBarsPadding()
                 .padding(horizontal = 8.dp, vertical = 10.dp),
             horizontalArrangement = Arrangement.SpaceAround,
-            verticalAlignment = Alignment.CenterVertically,
+            verticalAlignment     = Alignment.CenterVertically,
         ) {
             items.forEach { item ->
                 AdminBottomNavItemView(

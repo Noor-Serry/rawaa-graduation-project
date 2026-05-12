@@ -3,6 +3,7 @@ package noor.serry.rawaa.di
 import noor.serry.rawaa.ui.MainViewModel
 import noor.serry.rawaa.ui.base.DefaultDispatcherProvider
 import noor.serry.rawaa.ui.base.DispatcherProvider
+import noor.serry.rawaa.ui.screens.add_university_super_admin.AddUniversityViewModel
 import noor.serry.rawaa.ui.screens.courses_admin.CoursesAdminViewModel
 import noor.serry.rawaa.ui.screens.courses_student.CoursesViewModel
 import noor.serry.rawaa.ui.screens.courses_teacher.CoursesTeacherViewModel
@@ -60,6 +61,7 @@ val uiModule = module {
     viewModelOf(::SettingsAdminViewModel)
     viewModelOf(::AddUserViewModel)
     viewModelOf(::UniversitiesViewModel)
+    viewModelOf(::AddUniversityViewModel)
     // ── Shared ────────────────────────────────────────────────────────────────
     singleOf(::MainViewModel)
 }

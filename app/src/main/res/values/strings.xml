@@ -118,4 +118,5 @@
     <string name="nav_universities">الجامعات</string>
     <string name="show_message_enrolled_successfully">تم التسجيل في الماده بنجاح</string>
     <string name="show_message_enrolled_error">فشل التسجيل في الماده</string>
+    <string name="add_university">اضف جامعة</string>
 </resources>
