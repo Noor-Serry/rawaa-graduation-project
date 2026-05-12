@@ -17,7 +17,7 @@ import noor.serry.designsystem.design.AppTheme
 import noor.serry.rawaa.R
 
 enum class AdminNavTab {
-    HOME, DEPARTMENTS, EMPLOYEES, REPORTS, PROFILE
+    HOME, USERS, COURSES, REPORTS, SETTINGS
 }
 
 data class AdminBottomNavItem(
@@ -34,11 +34,11 @@ fun HomeAdminBottomNav(
     modifier: Modifier = Modifier,
 ) {
     val items = listOf(
-        AdminBottomNavItem(AdminNavTab.HOME,        R.drawable.ic_home,     R.string.nav_home,        AdminRouteKeys.Home),
-        AdminBottomNavItem(AdminNavTab.DEPARTMENTS, R.drawable.ic_book,     R.string.nav_departments, AdminRouteKeys.Departments),
-        AdminBottomNavItem(AdminNavTab.EMPLOYEES,   R.drawable.ic_person,   R.string.nav_employees,   AdminRouteKeys.Employees),
-        AdminBottomNavItem(AdminNavTab.REPORTS,     R.drawable.badge,       R.string.nav_reports,     AdminRouteKeys.Reports),
-        AdminBottomNavItem(AdminNavTab.PROFILE,     R.drawable.person,      R.string.nav_profile,     AdminRouteKeys.Profile),
+        AdminBottomNavItem(AdminNavTab.HOME,     R.drawable.ic_home,       R.string.nav_home,      AdminRouteKeys.Home),
+        AdminBottomNavItem(AdminNavTab.USERS,    R.drawable.ic_person,     R.string.admin,     AdminRouteKeys.Users),
+        AdminBottomNavItem(AdminNavTab.COURSES,  R.drawable.ic_book,       R.string.nav_courses,   AdminRouteKeys.Courses),
+        AdminBottomNavItem(AdminNavTab.REPORTS,  R.drawable.badge,         R.string.nav_reports,   AdminRouteKeys.Reports),
+        AdminBottomNavItem(AdminNavTab.SETTINGS, R.drawable.person,        R.string.admin,  AdminRouteKeys.Settings),
     )
 
     Surface(
@@ -56,9 +56,9 @@ fun HomeAdminBottomNav(
         ) {
             items.forEach { item ->
                 AdminBottomNavItemView(
-                    item = item,
+                    item       = item,
                     isSelected = selectedTab == item.tab,
-                    onClick = { onTabSelected(item) },
+                    onClick    = { onTabSelected(item) },
                 )
             }
         }
@@ -86,22 +86,22 @@ private fun AdminBottomNavItemView(
             contentAlignment = Alignment.Center,
         ) {
             IconButton(
-                onClick = onClick,
+                onClick  = onClick,
                 modifier = Modifier.size(24.dp),
             ) {
                 Icon(
-                    painter = painterResource(item.iconRes),
+                    painter            = painterResource(item.iconRes),
                     contentDescription = stringResource(item.labelRes),
-                    tint = iconTint,
-                    modifier = Modifier.size(22.dp),
+                    tint               = iconTint,
+                    modifier           = Modifier.size(22.dp),
                 )
             }
         }
         Text(
-            text = stringResource(item.labelRes),
-            fontSize = 11.sp,
+            text       = stringResource(item.labelRes),
+            fontSize   = 11.sp,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-            color = labelColor,
+            color      = labelColor,
         )
     }
 }

@@ -8,7 +8,6 @@ import noor.serry.rawaa.ui.screens.onboarding.OnboardingScreen
 import noor.serry.rawaa.ui.navigation.student.StudentEntryPoint
 import noor.serry.rawaa.ui.navigation.teatcher.TeacherEntryPoint
 import noor.serry.rawaa.ui.navigation.admin.AdminEntryPoint
-import noor.serry.rawaa.ui.navigation.superadmin.SuperAdminEntryPoint
 
 val appEntryProvider: (NavKey) -> NavEntry<NavKey> = entryProvider {
     entry<AppRoute.Login> {
@@ -32,6 +31,6 @@ val appEntryProvider: (NavKey) -> NavEntry<NavKey> = entryProvider {
     }
 
     entry<AppRoute.SuperAdminEntry> {
-        SuperAdminEntryPoint()
+        AdminEntryPoint()
     }
 }
