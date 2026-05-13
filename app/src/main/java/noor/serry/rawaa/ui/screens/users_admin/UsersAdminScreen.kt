@@ -36,6 +36,7 @@ import noor.serry.designsystem.components.utils.clickAnimation
 import noor.serry.designsystem.design.AppTheme
 import noor.serry.rawaa.R
 import noor.serry.rawaa.ui.navigation.super_admin.AdminBackStackProvider
+import noor.serry.rawaa.ui.navigation.university_admin.UniversityAdminBackStackProvider
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Pagination constants
@@ -853,7 +854,7 @@ private fun UsersErrorState(message: String, onRetry: () -> Unit) {
 
 @Composable
 private fun HandleEffects(effects: Flow<UsersAdminEffect>) {
-    val backStack = AdminBackStackProvider.current
+    val backStack = UniversityAdminBackStackProvider.current
     LaunchedEffect(Unit) {
         effects.collectLatest { effect ->
             when (effect) {

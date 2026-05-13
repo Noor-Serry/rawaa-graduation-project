@@ -33,7 +33,7 @@ import noor.serry.rawaa.ui.MainViewModel
 
 @Composable
 fun SettingsAdminScreen(
-    mainViewModel: MainViewModel,
+    mainViewModel: MainViewModel = koinViewModel(),
     viewModel: SettingsAdminViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()

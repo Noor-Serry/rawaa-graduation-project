@@ -114,9 +114,27 @@
     <!-- ── New navigation tab labels (Admin & SuperAdmin) ── -->
     <string name="nav_departments">الأقسام</string>
     <string name="nav_employees">الموظفون</string>
-    <string name="nav_reports">التقارير</string>
     <string name="nav_universities">الجامعات</string>
     <string name="show_message_enrolled_successfully">تم التسجيل في الماده بنجاح</string>
     <string name="show_message_enrolled_error">فشل التسجيل في الماده</string>
     <string name="add_university">اضف جامعة</string>
+    <string name="nav_users">المستخدمين</string>
+
+    <!-- More screen — nav tab labels -->
+    <string name="nav_schedules">الجداول</string>
+    <string name="nav_attendance">الحضور والغياب</string>
+    <string name="nav_exams">الامتحانات</string>
+    <string name="nav_questions">بنك الأسئلة</string>
+    <string name="nav_registrations">التسجيلات</string>
+    <string name="nav_reports">التقارير</string>
+    <string name="nav_settings">الإعدادات</string>
+
+    <!-- More screen — card subtitles -->
+    <string name="more_schedules_subtitle">عرض وإدارة جداول المحاضرات</string>
+    <string name="more_attendance_subtitle">متابعة حضور الطلاب والموظفين</string>
+    <string name="more_exams_subtitle">إنشاء الامتحانات وإدارتها</string>
+    <string name="more_questions_subtitle">إضافة الأسئلة وتعديلها</string>
+    <string name="more_registrations_subtitle">تسجيل الطلاب في المقررات</string>
+    <string name="more_reports_subtitle">تقارير الحضور والدرجات</string>
+    <string name="more_settings_subtitle">إعدادات الجامعة والحساب</string>
 </resources>
