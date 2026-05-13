@@ -71,6 +71,10 @@ class UsersAdminViewModel(
         sendNewNavigationEffect(effect)
     }
 
+    override fun onEditClicked(userId: Int, userType: UsersAdminUiState.UserType) {
+        sendNewNavigationEffect(UsersAdminEffect.NavigateToEditUser(userId, userType))
+    }
+
     // ── Delete ────────────────────────────────────────────────────────────────
 
     override fun onDeleteClicked(userId: Int, userType: UsersAdminUiState.UserType) {
@@ -149,9 +153,8 @@ private fun EmployeeDto.toUserItem(): UsersAdminUiState.UserItem {
         departmentId   = departmentId,
         departmentName = departmentName,
         isActive       = isActive == 1,
-        createdAt      = null,      // EmployeeDto has no createdAt in list response
+        createdAt      = null,
         level          = null,
         roleTitle      = roleTitle,
     )
 }
-

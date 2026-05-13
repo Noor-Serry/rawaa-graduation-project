@@ -10,6 +10,8 @@ import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import noor.serry.rawaa.data.dto.*
 import noor.serry.rawaa.data.local.TokenDataStore
 
@@ -396,17 +398,50 @@ class UniversityRepository(
         gpa: Float? = null,
         name: String? = null,
         email: String? = null,
+        isActive : Boolean? = null
     ): ApiResponse<StudentDto> {
         val t = token()
-        val body = buildMap<String, Any> {
+        val body = buildJsonObject {
             if (phone        != null) put("phone",         phone)
             if (departmentId != null) put("department_id", departmentId)
             if (level        != null) put("level",         level)
             if (gpa          != null) put("gpa",           gpa)
             if (name         != null) put("name",          name)
             if (email        != null) put("email",         email)
+            if (isActive     != null) put("is_active",     if (isActive) 1 else 0)
         }
         return client.put("$baseUrl/api/students/$id") {
+            header("Authorization", bearer(t))
+            contentType(ContentType.Application.Json)
+            setBody(body)
+        }.body()
+    }
+
+    // ── updateEmployee ────────────────────────────────────────────────────────────
+    suspend fun updateEmployee(
+        id: Int,
+        name: String? = null,
+        email: String? = null,
+        phone: String? = null,
+        roleTitle: String? = null,
+        salary: Double? = null,
+        departmentId: Int? = null,
+        hireDate: String? = null,
+        isActive : Boolean? = null
+    ): ApiResponse<EmployeeDto> {
+        val t = token()
+        val body = buildJsonObject {
+            if (name         != null) put("name",          name)
+            if (email        != null) put("email",         email)
+            if (phone        != null) put("phone",         phone)
+            if (roleTitle    != null) put("role_title",    roleTitle)
+            if (salary       != null) put("salary",        salary)
+            if (departmentId != null) put("department_id", departmentId)
+            if (hireDate     != null) put("hire_date",     hireDate)
+            if (isActive     != null) put("is_active",     if (isActive) 1 else 0)
+
+        }
+        return client.put("$baseUrl/api/employees/$id") {
             header("Authorization", bearer(t))
             contentType(ContentType.Application.Json)
             setBody(body)
@@ -472,34 +507,6 @@ class UniversityRepository(
             header("Authorization", bearer(t))
             contentType(ContentType.Application.Json)
             setBody(request)
-        }.body()
-    }
-
-    /** PUT /api/employees/{id} */
-    suspend fun updateEmployee(
-        id: Int,
-        name: String? = null,
-        email: String? = null,
-        phone: String? = null,
-        roleTitle: String? = null,
-        salary: Double? = null,
-        departmentId: Int? = null,
-        hireDate: String? = null,
-    ): ApiResponse<EmployeeDto> {
-        val t = token()
-        val body = buildMap<String, Any> {
-            if (name         != null) put("name",          name)
-            if (email        != null) put("email",         email)
-            if (phone        != null) put("phone",         phone)
-            if (roleTitle    != null) put("role_title",    roleTitle)
-            if (salary       != null) put("salary",        salary)
-            if (departmentId != null) put("department_id", departmentId)
-            if (hireDate     != null) put("hire_date",     hireDate)
-        }
-        return client.put("$baseUrl/api/employees/$id") {
-            header("Authorization", bearer(t))
-            contentType(ContentType.Application.Json)
-            setBody(body)
         }.body()
     }
 

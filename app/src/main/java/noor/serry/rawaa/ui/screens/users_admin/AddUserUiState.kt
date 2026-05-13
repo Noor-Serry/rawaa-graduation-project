@@ -1,12 +1,7 @@
 package noor.serry.rawaa.ui.screens.users_admin
 
 /**
- * UI state for the Add-User bottom sheet / flow.
- *
- * Kept separate from [UsersAdminUiState] so the ViewModel that owns
- * this screen can be scoped independently (e.g. with a dedicated
- * Koin/Hilt scope) and not carry form state inside the list screen's
- * state object.
+ * UI state for the Add-User screen.
  *
  * Submission maps to:
  *   • POST /api/students   → [UniversityRepository.createStudent]  (when [selectedRole] == STUDENT)
@@ -37,11 +32,13 @@ data class AddUserUiState(
     // ── Employee-only fields ──────────────────────────────────────────────────
     val roleTitle: String      = "",
 
+    // ── University ────────────────────────────────────────────────────────────
+    /** Resolved from GET /api/admin/dashboard during init; required by create-user endpoints. */
+    val universitySlug: String = "",
+
     // ── Async / feedback ──────────────────────────────────────────────────────
     val isSubmitting: Boolean  = false,
     val errorMessage: String?  = null,
-
-    // ── Validation (derived; computed via [validationErrors]) ────────────────
 ) {
 
     // ── Validation ────────────────────────────────────────────────────────────
@@ -51,9 +48,9 @@ data class AddUserUiState(
 
     val emailError: String?
         get() = when {
-            email.isBlank()            -> "البريد مطلوب"
-            !email.contains("@")       -> "صيغة البريد غير صحيحة"
-            else                       -> null
+            email.isBlank()      -> "البريد مطلوب"
+            !email.contains("@") -> "صيغة البريد غير صحيحة"
+            else                 -> null
         }
 
     val passwordError: String?
@@ -61,6 +58,27 @@ data class AddUserUiState(
 
     val departmentError: String?
         get() = if (departmentId == null) "القسم مطلوب" else null
+
+    val levelError: String?
+        get() = if (selectedRole == NewUserRole.STUDENT) {
+            val v = level.toIntOrNull()
+            when {
+                level.isBlank() -> "المستوى مطلوب"
+                v == null       -> "المستوى يجب أن يكون رقماً"
+                v < 1           -> "المستوى يجب أن يكون 1 على الأقل"
+                else            -> null
+            }
+        } else null
+
+    val enrollmentYearError: String?
+        get() = if (selectedRole == NewUserRole.STUDENT) {
+            val v = enrollmentYear.toIntOrNull()
+            when {
+                enrollmentYear.isBlank() -> "سنة الالتحاق مطلوبة"
+                v == null                -> "سنة الالتحاق يجب أن تكون رقماً"
+                else                     -> null
+            }
+        } else null
 
     val roleTitleError: String?
         get() = if (selectedRole != NewUserRole.STUDENT && roleTitle.isBlank())
@@ -71,6 +89,8 @@ data class AddUserUiState(
                 emailError == null &&
                 passwordError == null &&
                 departmentError == null &&
+                levelError == null &&
+                enrollmentYearError == null &&
                 roleTitleError == null
 
     // ── Convenience mapper ────────────────────────────────────────────────────

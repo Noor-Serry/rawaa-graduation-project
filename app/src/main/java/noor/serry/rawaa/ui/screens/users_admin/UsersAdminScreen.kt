@@ -37,6 +37,7 @@ import noor.serry.designsystem.design.AppTheme
 import noor.serry.rawaa.R
 import noor.serry.rawaa.ui.navigation.super_admin.AdminBackStackProvider
 import noor.serry.rawaa.ui.navigation.university_admin.UniversityAdminBackStackProvider
+import noor.serry.rawaa.ui.navigation.university_admin.UniversityAdminRouteKeys
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Pagination constants
@@ -573,7 +574,7 @@ private fun UserCard(
                     textColor = AppTheme.color.textSecondary,
                     bgColor   = AppTheme.color.bgHover,
                     modifier  = Modifier.weight(1f),
-                    onClick   = { listener.onViewProfileClicked(item.id, item.userType) },
+                    onClick   = { listener.onEditClicked(item.id, item.userType) },
                 )
                 // عرض الملف (view profile) – right-most, neutral
                 ActionButton(
@@ -858,9 +859,18 @@ private fun HandleEffects(effects: Flow<UsersAdminEffect>) {
     LaunchedEffect(Unit) {
         effects.collectLatest { effect ->
             when (effect) {
-                is UsersAdminEffect.NavigateToStudentDetail  -> { /* backStack.add(AppRoute.StudentDetail(effect.studentId)) */ }
-                is UsersAdminEffect.NavigateToAddUser   -> {    }
-                is UsersAdminEffect.NavigateToEmployeeDetail -> { /* backStack.add(AppRoute.EmployeeDetail(effect.employeeId)) */ }
+                is UsersAdminEffect.NavigateToStudentDetail  -> {
+                    backStack.add(UniversityAdminRouteKeys.StudentDetail(effect.studentId))
+                }
+                is UsersAdminEffect.NavigateToEmployeeDetail -> {
+                    backStack.add(UniversityAdminRouteKeys.EmployeeDetail(effect.employeeId))
+                }
+                is UsersAdminEffect.NavigateToAddUser        -> {
+                    backStack.add(UniversityAdminRouteKeys.AddUser)
+                }
+                is UsersAdminEffect.NavigateToEditUser       -> {
+                    backStack.add(UniversityAdminRouteKeys.EditUser(effect.userId, effect.userType))
+                }
                 is UsersAdminEffect.ShowDeleteSuccess        -> { /* show toast/snackbar */ }
                 is UsersAdminEffect.ShowError                -> { /* show toast/snackbar */ }
             }

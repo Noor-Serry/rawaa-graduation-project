@@ -21,55 +21,55 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
+import org.koin.androidx.compose.koinViewModel
+import org.koin.core.parameter.parametersOf
 import noor.serry.designsystem.components.BaseButton
+import noor.serry.designsystem.components.Icon
 import noor.serry.designsystem.components.LabelInputField
 import noor.serry.designsystem.components.Text
 import noor.serry.designsystem.design.AppTheme
 import noor.serry.rawaa.R
 import noor.serry.rawaa.ui.navigation.university_admin.UniversityAdminBackStackProvider
-import org.koin.androidx.compose.koinViewModel
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Public entry-point  (was: AddUserSheet – ModalBottomSheet)
-// Now rendered as a full screen via the back-stack navigation layer.
+// Entry point
 // ─────────────────────────────────────────────────────────────────────────────
 
 @Composable
-fun AddUserScreen(
-    viewModel: AddUserViewModel = koinViewModel()
-) {
-    val state by viewModel.state.collectAsState()
-    val backStack = UniversityAdminBackStackProvider.current
+fun EditUserScreen(
+    userId: Int,
+    userType: UsersAdminUiState.UserType,
+    viewModel: EditUserViewModel = koinViewModel(
+        key = "$userId-$userType",
+        parameters = {
+            parametersOf(userId, userType)
+        }
+    )) {
+    val state    by viewModel.state.collectAsState()
+    HandleEditEffects(effects = viewModel.effect)
 
-    // ── Effect handler ────────────────────────────────────────────────────────
-    LaunchedEffect(Unit) {
-        viewModel.effect.collectLatest { effect ->
-            when (effect) {
-                is AddUserEffect.UserCreatedSuccessfully -> backStack.removeLastOrNull()
-                is AddUserEffect.ShowError               -> { /* parent snackbar / toast */ }
-                is AddUserEffect.Dismissed               -> backStack.removeLastOrNull()
+    when {
+        state.isLoading -> {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(color = AppTheme.color.primary)
             }
+        }
+        state.errorMessage != null && !state.isSubmitting -> {
+            EditUserErrorState(
+                message = state.errorMessage ?: "",
+                onRetry = viewModel::onRetryClicked,
+            )
+        }
+        else -> {
+            EditUserScaffold(state = state, listener = viewModel)
         }
     }
 
-    // ── Full-screen scaffold with top bar ─────────────────────────────────────
-    Scaffold(
-        containerColor = AppTheme.color.bg,
-        topBar = {
-            AddUserTopBar(onNavigateUp = viewModel::onDismissClicked)
-        },
-    ) { innerPadding ->
-        AddUserContent(
-            state    = state,
-            listener = viewModel,
-            modifier = Modifier.padding(innerPadding),
-        )
-    }
-
-    // ── Department picker dialog ───────────────────────────────────────────────
+    // Department picker dialog
     if (state.showDepartmentPicker) {
-        DepartmentPickerDialog(
+        EditDepartmentPickerDialog(
             departments = state.availableDepartments,
             onSelected  = viewModel::onDepartmentSelected,
             onDismiss   = viewModel::onDepartmentPickerDismissed,
@@ -78,43 +78,57 @@ fun AddUserScreen(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Top app bar
+// Scaffold
 // ─────────────────────────────────────────────────────────────────────────────
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun AddUserTopBar(onNavigateUp: () -> Unit) {
-    TopAppBar(
-        title = {
-            Text(
-                text  = "إضافة مستخدم جديد",
-                color = AppTheme.color.primaryDark,
-                style = AppTheme.textStyle.headline.small,
+private fun EditUserScaffold(
+    state: EditUserUiState,
+    listener: EditUserInteractionListener,
+) {
+    Scaffold(
+        containerColor = AppTheme.color.bg,
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        text  = "تعديل بيانات المستخدم",
+                        color = AppTheme.color.primaryDark,
+                        style = AppTheme.textStyle.headline.small,
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = listener::onBackClicked) {
+                        Icon(
+                            painter            = painterResource(R.drawable.ic_arrow_forward),
+                            contentDescription = "رجوع",
+                            tint               = AppTheme.color.primaryDark,
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = AppTheme.color.bg,
+                ),
             )
         },
-        navigationIcon = {
-            IconButton(onClick = onNavigateUp) {
-                Icon(
-                    painter            = painterResource(R.drawable.ic_arrow_forward),
-                    contentDescription = "رجوع",
-                    tint               = AppTheme.color.primaryDark,
-                )
-            }
-        },
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = AppTheme.color.bg,
-        ),
-    )
+    ) { innerPadding ->
+        EditUserContent(
+            state    = state,
+            listener = listener,
+            modifier = Modifier.padding(innerPadding),
+        )
+    }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Screen content  (same form, adapted for full-screen layout)
+// Content
 // ─────────────────────────────────────────────────────────────────────────────
 
 @Composable
-private fun AddUserContent(
-    state: AddUserUiState,
-    listener: AddUserInteractionListener,
+private fun EditUserContent(
+    state: EditUserUiState,
+    listener: EditUserInteractionListener,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -127,27 +141,9 @@ private fun AddUserContent(
     ) {
         Spacer(Modifier.height(8.dp))
 
-        // ── Role selector ─────────────────────────────────────────────────────
-        Text(
-            text  = "نوع المستخدم",
-            color = AppTheme.color.primaryDark,
-            style = AppTheme.textStyle.body.small,
-        )
-        Row(
-            modifier              = Modifier
-                .fillMaxWidth()
-                .padding(top = 10.dp, bottom = 20.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            NewUserRole.entries.forEach { role ->
-                NewUserRoleChip(
-                    label      = role.labelAr,
-                    isSelected = state.selectedRole == role,
-                    onClick    = { listener.onRoleChanged(role) },
-                    modifier   = Modifier.weight(1f),
-                )
-            }
-        }
+        // ── User type badge (read-only) ───────────────────────────────────────
+        EditUserTypeBadge(userType = state.userType)
+        Spacer(Modifier.height(16.dp))
 
         // ── Common fields ─────────────────────────────────────────────────────
         LabelInputField(
@@ -164,23 +160,11 @@ private fun AddUserContent(
         LabelInputField(
             text          = state.email,
             onValueChange = listener::onEmailChanged,
-            hintText      = "البريد الإلكتروني الجامعي",
+            hintText      = "البريد الإلكتروني",
             label         = "البريد الإلكتروني",
             icon          = painterResource(noor.serry.designsystem.R.drawable.mail),
             isError       = state.emailError != null,
             errorMessage  = state.emailError,
-        )
-        Spacer(Modifier.height(12.dp))
-
-        LabelInputField(
-            text          = state.password,
-            onValueChange = listener::onPasswordChanged,
-            hintText      = "كلمة المرور",
-            label         = "كلمة المرور",
-            icon          = painterResource(R.drawable.lock),
-            isPassword    = true,
-            isError       = state.passwordError != null,
-            errorMessage  = state.passwordError,
         )
         Spacer(Modifier.height(12.dp))
 
@@ -200,17 +184,22 @@ private fun AddUserContent(
             style    = AppTheme.textStyle.body.small,
             modifier = Modifier.padding(bottom = 6.dp),
         )
-        DepartmentPickerField(
+        EditDepartmentPickerField(
             selectedName = state.departmentName.ifBlank { "اختر القسم" },
-            isError      = state.departmentError != null,
-            errorMessage = state.departmentError,
             onClick      = listener::onDepartmentPickerOpened,
+        )
+        Spacer(Modifier.height(12.dp))
+
+        // ── Active / Inactive toggle ──────────────────────────────────────────
+        EditActiveToggle(
+            isActive  = state.isActive,
+            onToggled = listener::onActiveToggled,
         )
         Spacer(Modifier.height(12.dp))
 
         // ── Student-only fields ───────────────────────────────────────────────
         AnimatedVisibility(
-            visible = state.selectedRole == NewUserRole.STUDENT,
+            visible = state.userType == UsersAdminUiState.UserType.STUDENT,
             enter   = fadeIn(tween(200)) + slideInVertically(tween(200, easing = FastOutSlowInEasing)),
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -220,8 +209,6 @@ private fun AddUserContent(
                     hintText      = "1",
                     label         = "المستوى الدراسي",
                     icon          = painterResource(R.drawable.badge),
-                    isError       = state.levelError != null,
-                    errorMessage  = state.levelError,
                 )
                 LabelInputField(
                     text          = state.enrollmentYear,
@@ -229,16 +216,14 @@ private fun AddUserContent(
                     hintText      = "2025",
                     label         = "سنة الالتحاق",
                     icon          = painterResource(R.drawable.ic_clock),
-                    isError       = state.enrollmentYearError != null,
-                    errorMessage  = state.enrollmentYearError,
                 )
                 Spacer(Modifier.height(0.dp))
             }
         }
 
-        // ── Employee-only fields ──────────────────────────────────────────────
+        // ── Employee / Doctor-only fields ─────────────────────────────────────
         AnimatedVisibility(
-            visible = state.selectedRole != NewUserRole.STUDENT,
+            visible = state.userType != UsersAdminUiState.UserType.STUDENT,
             enter   = fadeIn(tween(200)) + slideInVertically(tween(200, easing = FastOutSlowInEasing)),
         ) {
             Column {
@@ -273,116 +258,120 @@ private fun AddUserContent(
             Spacer(Modifier.height(12.dp))
         }
 
-        // ── Buttons ───────────────────────────────────────────────────────────
+        // ── Action buttons ────────────────────────────────────────────────────
         Spacer(Modifier.height(8.dp))
         BaseButton(
-            text              = if (state.isSubmitting) "جاري الإضافة..." else "إضافة المستخدم",
-            onClick           = listener::onSubmitClicked,
+            text              = if (state.isSubmitting) "جاري الحفظ..." else "حفظ التعديلات",
+            onClick           = listener::onSaveClicked,
             roundedCornerSize = 10.dp,
             isEnable          = !state.isSubmitting,
         )
         Spacer(Modifier.height(10.dp))
         BaseButton(
-            text            = "إلغاء",
-            onClick         = listener::onDismissClicked,
+            text              = "إلغاء",
+            onClick           = listener::onBackClicked,
             roundedCornerSize = 10.dp,
-            backgroundColor = AppTheme.color.bgHover,
-            textColor       = AppTheme.color.textSecondary,
-            borderColor     = AppTheme.color.border,
-            borderWidth     = 1.dp,
+            backgroundColor   = AppTheme.color.bgHover,
+            textColor         = AppTheme.color.textSecondary,
+            borderColor       = AppTheme.color.border,
+            borderWidth       = 1.dp,
         )
     }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Role chip
+// Small reusable composables
 // ─────────────────────────────────────────────────────────────────────────────
 
 @Composable
-private fun NewUserRoleChip(
-    label: String,
-    isSelected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
+private fun EditUserTypeBadge(userType: UsersAdminUiState.UserType) {
+    val (bg, tint, label) = when (userType) {
+        UsersAdminUiState.UserType.STUDENT -> Triple(Color(0xFFEFF6FF), Color(0xFF1D4ED8), "🎓 طالب")
+        UsersAdminUiState.UserType.DOCTOR  -> Triple(Color(0xFFFEF9C3), Color(0xFFB45309), "👨‍🏫 مدرس")
+        UsersAdminUiState.UserType.ADMIN   -> Triple(Color(0xFFF3F4F6), Color(0xFF374151), "⚙️ موظف")
+    }
     Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(12.dp))
-            .background(if (isSelected) AppTheme.color.primary else AppTheme.color.bgHover)
-            .border(
-                width = 1.dp,
-                color = if (isSelected) AppTheme.color.primary else AppTheme.color.border,
-                shape = RoundedCornerShape(12.dp),
-            )
-            .clickable(onClick = onClick)
-            .padding(vertical = 12.dp),
-        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .clip(RoundedCornerShape(10.dp))
+            .background(bg)
+            .border(1.dp, tint.copy(alpha = .25f), RoundedCornerShape(10.dp))
+            .padding(horizontal = 14.dp, vertical = 8.dp),
     ) {
         Text(
             text  = label,
-            color = if (isSelected) AppTheme.color.bg else AppTheme.color.textSecondary,
-            style = AppTheme.textStyle.label.medium.copy(fontWeight = FontWeight.Medium),
+            color = tint,
+            style = AppTheme.textStyle.label.medium.copy(fontWeight = FontWeight.Bold),
+        )
+    }
+}
+
+@Composable
+private fun EditActiveToggle(isActive: Boolean, onToggled: (Boolean) -> Unit) {
+    Row(
+        modifier              = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(AppTheme.color.bgHover)
+            .border(1.dp, AppTheme.color.border, RoundedCornerShape(12.dp))
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment     = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Switch(
+            checked         = isActive,
+            onCheckedChange = onToggled,
+            colors          = SwitchDefaults.colors(
+                checkedThumbColor       = AppTheme.color.bg,
+                checkedTrackColor       = AppTheme.color.primary,
+                uncheckedThumbColor     = AppTheme.color.bg,
+                uncheckedTrackColor     = Color(0xFFDC2626),
+            ),
+        )
+        Text(
+            text  = if (isActive) "الحساب نشط" else "الحساب موقوف",
+            color = if (isActive) Color(0xFF16A34A) else Color(0xFFDC2626),
+            style = AppTheme.textStyle.body.small.copy(fontWeight = FontWeight.Medium),
+        )
+    }
+}
+
+@Composable
+private fun EditDepartmentPickerField(
+    selectedName: String,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(AppTheme.color.bgHover)
+            .border(1.dp, AppTheme.color.border, RoundedCornerShape(12.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment     = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Text(
+            text  = selectedName,
+            color = if (selectedName == "اختر القسم")
+                AppTheme.color.textSecondary else AppTheme.color.text,
+            style = AppTheme.textStyle.body.small,
+        )
+        Icon(
+            painter            = painterResource(R.drawable.university),
+            contentDescription = null,
+            tint               = AppTheme.color.textSecondary,
+            modifier           = Modifier.size(18.dp),
         )
     }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Department picker trigger field
+// Department picker dialog  (same pattern as AddUserScreen)
 // ─────────────────────────────────────────────────────────────────────────────
 
 @Composable
-private fun DepartmentPickerField(
-    selectedName: String,
-    isError: Boolean,
-    errorMessage: String?,
-    onClick: () -> Unit,
-) {
-    Column {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
-                .background(AppTheme.color.bgHover)
-                .border(
-                    width = 1.dp,
-                    color = if (isError) AppTheme.color.error else AppTheme.color.border,
-                    shape = RoundedCornerShape(12.dp),
-                )
-                .clickable(onClick = onClick)
-                .padding(horizontal = 16.dp, vertical = 14.dp),
-            verticalAlignment     = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            Text(
-                text  = selectedName,
-                color = if (selectedName == "اختر القسم")
-                    AppTheme.color.textSecondary else AppTheme.color.text,
-                style = AppTheme.textStyle.body.small,
-            )
-            Icon(
-                painter            = painterResource(R.drawable.university),
-                contentDescription = null,
-                tint               = AppTheme.color.textSecondary,
-                modifier           = Modifier.size(18.dp),
-            )
-        }
-        if (isError && errorMessage != null) {
-            Text(
-                text     = errorMessage,
-                color    = AppTheme.color.error,
-                style    = AppTheme.textStyle.label.small,
-                modifier = Modifier.padding(start = 4.dp, top = 4.dp),
-            )
-        }
-    }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Department picker dialog
-// ─────────────────────────────────────────────────────────────────────────────
-
-@Composable
-private fun DepartmentPickerDialog(
+private fun EditDepartmentPickerDialog(
     departments: List<UsersAdminUiState.DepartmentFilterItem>,
     onSelected: (UsersAdminUiState.DepartmentFilterItem) -> Unit,
     onDismiss: () -> Unit,
@@ -434,4 +423,63 @@ private fun DepartmentPickerDialog(
         containerColor = AppTheme.color.bg,
         shape          = RoundedCornerShape(16.dp),
     )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Error state
+// ─────────────────────────────────────────────────────────────────────────────
+
+@Composable
+private fun EditUserErrorState(message: String, onRetry: () -> Unit) {
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Text(
+                text  = message,
+                color = AppTheme.color.textSecondary,
+                style = AppTheme.textStyle.body.medium,
+            )
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(AppTheme.color.primary)
+                    .clickable(onClick = onRetry)
+                    .padding(horizontal = 24.dp, vertical = 12.dp),
+            ) {
+                Text(
+                    text  = "إعادة المحاولة",
+                    color = AppTheme.color.bg,
+                    style = AppTheme.textStyle.body.medium.copy(fontWeight = FontWeight.Bold),
+                )
+            }
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Effects handler
+// ─────────────────────────────────────────────────────────────────────────────
+
+@Composable
+private fun HandleEditEffects(
+    effects: Flow<EditUserEffect>,
+) {
+    val navBackStack = UniversityAdminBackStackProvider.current
+    LaunchedEffect(Unit) {
+        effects.collectLatest { effect ->
+            when (effect) {
+                is EditUserEffect.UpdatedSuccessfully -> {
+                    navBackStack.removeLastOrNull()
+                }
+                is EditUserEffect.NavigateBack -> {
+                    navBackStack.removeLastOrNull()
+                }
+                is EditUserEffect.ShowError -> {
+                    // show toast / snackbar
+                }
+            }
+        }
+    }
 }

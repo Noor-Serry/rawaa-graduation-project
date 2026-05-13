@@ -6,9 +6,12 @@ interface UsersAdminInteractionListener {
     fun onSearchQueryChanged(query: String)
     fun onDepartmentFilterSelected(departmentId: Int?)
 
-    // ── List actions (all backed by real endpoints) ────────────────────────────
-    /** عرض الملف – navigates to the student / employee detail screen */
+    // ── List actions ──────────────────────────────────────────────────────────
+    /** عرض الملف – navigates to the read-only profile screen */
     fun onViewProfileClicked(userId: Int, userType: UsersAdminUiState.UserType)
+
+    /** تعديل – navigates to the edit screen */
+    fun onEditClicked(userId: Int, userType: UsersAdminUiState.UserType)
 
     /** حذف – shows confirmation dialog */
     fun onDeleteClicked(userId: Int, userType: UsersAdminUiState.UserType)
@@ -20,7 +23,6 @@ interface UsersAdminInteractionListener {
     fun onDeleteDismissed()
 
     // ── Add-user sheet ────────────────────────────────────────────────────────
-    /** إضافة مستخدم جديد button */
     fun onAddUserClicked()
     fun onAddUserDismissed()
 }

@@ -24,7 +24,9 @@ import noor.serry.rawaa.ui.screens.student_profile_teacher.StudentProfileViewMod
 import noor.serry.rawaa.ui.screens.students_teacher.StudentsViewModel
 import noor.serry.rawaa.ui.screens.universities_super_admin.UniversitiesViewModel
 import noor.serry.rawaa.ui.screens.users_admin.AddUserViewModel
+import noor.serry.rawaa.ui.screens.users_admin.EditUserViewModel
 import noor.serry.rawaa.ui.screens.users_admin.UsersAdminViewModel
+import noor.serry.rawaa.ui.screens.users_admin.ViewUserViewModel
 import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.bind
@@ -62,6 +64,8 @@ val uiModule = module {
     viewModelOf(::AddUserViewModel)
     viewModelOf(::UniversitiesViewModel)
     viewModelOf(::AddUniversityViewModel)
+    viewModelOf(::EditUserViewModel)
+    viewModelOf(::ViewUserViewModel)
     // ── Shared ────────────────────────────────────────────────────────────────
     singleOf(::MainViewModel)
 }

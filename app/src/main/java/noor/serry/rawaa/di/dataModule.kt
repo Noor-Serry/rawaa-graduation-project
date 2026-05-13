@@ -38,10 +38,11 @@ val dataModule = module {
         HttpClient {
             defaultRequest {
                 header(HttpHeaders.ContentType, ContentType.Application.Json)
-
             }
             install(ContentNegotiation) {
-                json(Json { ignoreUnknownKeys = true })
+                json(Json { ignoreUnknownKeys = true
+                    encodeDefaults = true
+                })
             }
             install(Logging) {
                 logger = object : Logger {

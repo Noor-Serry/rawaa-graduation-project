@@ -1,53 +1,70 @@
 package noor.serry.rawaa.ui.screens.users_admin
 
-import noor.serry.rawaa.data.dto.DepartmentDto
+import android.util.Log
 import noor.serry.rawaa.data.dto.DoctorRegisterRequest
 import noor.serry.rawaa.data.dto.StudentRegisterRequest
+import noor.serry.rawaa.data.local.TokenDataStore
 import noor.serry.rawaa.data.repository.UniversityRepository
 import noor.serry.rawaa.ui.base.BaseViewModel
 import noor.serry.rawaa.ui.base.DispatcherProvider
 
 /**
- * ViewModel that owns the Add-User bottom sheet's state and business logic.
+ * ViewModel that owns the Add-User screen's state and business logic.
  *
  * Extends [BaseViewModel] with [AddUserUiState] / [AddUserEffect] and
  * implements [AddUserInteractionListener] so the composable can call
  * interactions directly on the ViewModel reference without extra lambdas.
  *
- * Lifecycle note
- * ──────────────
- * This ViewModel is typically scoped to the bottom sheet's back-stack entry
- * (or a Koin sub-scope) so it is cleared when the sheet is dismissed, keeping
- * the list screen's ViewModel untouched.
- *
  * @param repository    Data source; injected via Koin / Hilt.
+ * @param tokenStore    Provides the persisted auth token after login.
  * @param dispatchers   Thread dispatcher provider (IO / Main / Default).
  */
 class AddUserViewModel(
     private val repository: UniversityRepository,
+    private val tokenStore: TokenDataStore,
     private val dispatchers: DispatcherProvider,
 ) : BaseViewModel<AddUserUiState, AddUserEffect>(
-    initialState      = AddUserUiState(),
+    initialState       = AddUserUiState(),
     dispatcherProvider = dispatchers,
 ), AddUserInteractionListener {
 
-    // ── Init – load departments ───────────────────────────────────────────────
+    // ── Init ──────────────────────────────────────────────────────────────────
 
     init {
-        loadDepartments()
+        loadInitialData()
     }
 
-    private fun loadDepartments() {
+    /**
+     * Fires two parallel API calls during screen initialisation:
+     *
+     *  1. GET /api/departments     → populates the department picker.
+     *  2. GET /api/admin/dashboard → provides [AdminUniversityRefDto.slug]
+     *     which is required by both POST /api/students and POST /api/employees.
+     *
+     * The slug is stored in [AddUserUiState.universitySlug] so [onSubmitClicked]
+     * never has to make an extra network call at submit time.
+     */
+    private fun loadInitialData() {
         tryToExecute(
-            action     = { repository.getDepartments() },
-            onSuccess  = { response ->
-                val items = response.data
+            action = {
+                repository.getDepartments()
+            },
+            onSuccess = { deptsResponse  ->
+                val items = deptsResponse.data
                     ?.map { it.toDepartmentFilterItem() }
                     ?: emptyList()
-                updateState { it.copy(availableDepartments = items) }
+
+                val slug = ""
+
+                updateState {
+                    it.copy(
+                        availableDepartments = items,
+                        universitySlug       = slug,
+                    )
+                }
             },
-            onError    = { e ->
-                updateState { it.copy(errorMessage = e.message ?: "فشل تحميل الأقسام") }
+            onError = { e ->
+                updateState { it.copy(errorMessage = e.message ?: "فشل تحميل البيانات الأولية") }
             },
             dispatcher = dispatchers.IO,
         )
@@ -82,10 +99,10 @@ class AddUserViewModel(
     override fun onDepartmentSelected(department: UsersAdminUiState.DepartmentFilterItem) {
         updateState {
             it.copy(
-                departmentId      = department.id,
-                departmentName    = department.name,
+                departmentId         = department.id,
+                departmentName       = department.name,
                 showDepartmentPicker = false,
-                errorMessage      = null,
+                errorMessage         = null,
             )
         }
     }
@@ -116,13 +133,13 @@ class AddUserViewModel(
         updateState { it.copy(isSubmitting = true, errorMessage = null) }
 
         val form = current.toFormState()
-
+        val slug = current.universitySlug     // resolved in init — guaranteed non-empty if dashboard loaded
         tryToExecute(
             action = {
                 when (form.selectedRole) {
-                    NewUserRole.STUDENT -> repository.createStudent(
+                            NewUserRole.STUDENT -> {repository.createStudent(
                         StudentRegisterRequest(
-                            universitySlug = "",           // provide your app's university slug here
+                            universitySlug = slug,
                             name           = form.name,
                             email          = form.email,
                             password       = form.password,
@@ -132,10 +149,11 @@ class AddUserViewModel(
                             enrollmentYear = form.enrollmentYear.toIntOrNull() ?: 2025,
                         )
                     )
+                            }
                     NewUserRole.DOCTOR,
                     NewUserRole.EMPLOYEE -> repository.createEmployee(
                         DoctorRegisterRequest(
-                            universitySlug = "",           // provide your app's university slug here
+                            universitySlug = slug,
                             name           = form.name,
                             email          = form.email,
                             password       = form.password,
