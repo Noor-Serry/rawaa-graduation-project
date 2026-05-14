@@ -21,12 +21,6 @@ enum class HomeNavTab {
     HOME, COURSES, SCHEDULE, NOTIFICATIONS, PROFILE
 }
 
-/**
- * Maps a backstack [NavKey] to its corresponding [HomeNavTab].
- * Returns null for keys that have no bottom-nav tab (e.g. detail screens).
- * Mirrors the teacher's [toNavTab] extension so both entry points derive
- * the selected tab from the backstack instead of keeping separate state.
- */
 fun NavKey.toStudentNavTab(): HomeNavTab? = when (this) {
     StudentRouteKeys.Home          -> HomeNavTab.HOME
     StudentRouteKeys.Courses       -> HomeNavTab.COURSES
@@ -49,18 +43,20 @@ fun HomeStudentBottomNav(
     onTabSelected: (BottomNavItem) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    // RTL: first item in the list = rightmost on screen.
+    // Home must be rightmost → HOME goes first.
     val items = listOf(
         BottomNavItem(HomeNavTab.HOME,          R.drawable.ic_home,     R.string.nav_home,          StudentRouteKeys.Home),
         BottomNavItem(HomeNavTab.COURSES,       R.drawable.ic_book,     R.string.nav_courses,       StudentRouteKeys.Courses),
         BottomNavItem(HomeNavTab.SCHEDULE,      R.drawable.ic_calendar, R.string.nav_schedule,      StudentRouteKeys.Schedule),
-        BottomNavItem(HomeNavTab.NOTIFICATIONS, R.drawable.ic_bell,     R.string.nav_notifications, StudentRouteKeys.Notifications),
+        BottomNavItem(HomeNavTab.NOTIFICATIONS, R.drawable.bell,        R.string.nav_notifications, StudentRouteKeys.Notifications),
         BottomNavItem(HomeNavTab.PROFILE,       R.drawable.person,      R.string.nav_profile,       StudentRouteKeys.Profile),
     )
 
     Surface(
-        modifier      = modifier.fillMaxWidth(),
+        modifier        = modifier.fillMaxWidth(),
         shadowElevation = 12.dp,
-        color         = Color.White,
+        color           = Color.White,
     ) {
         Row(
             modifier = Modifier
@@ -96,7 +92,7 @@ private fun BottomNavItemView(
         verticalArrangement = Arrangement.spacedBy(3.dp),
     ) {
         Box(
-            modifier        = Modifier
+            modifier         = Modifier
                 .background(bgColor, RoundedCornerShape(12.dp))
                 .padding(horizontal = 12.dp, vertical = 6.dp),
             contentAlignment = Alignment.Center,

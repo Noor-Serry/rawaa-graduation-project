@@ -143,39 +143,22 @@ fun NotificationCard(
             }
         }
 
-
-
         // ── Action buttons row (only shown when unread) ───────────
         AnimatedVisibility (!item.isRead) {
             Row(
                 modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                // Primary: view details
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .background(AppTheme.color.primary,RoundedCornerShape(12.dp))
-                        .clickAnimation { onViewDetails() }
-                        .padding(vertical = 10.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = "عرض التفاصيل",
-                        color = AppTheme.color.bg,
-                        style = AppTheme.textStyle.body.small,
-                    )
-                }
                 // Ghost: mark as read
                 Box(
-                    modifier = Modifier.background(AppTheme.color.bgHover,RoundedCornerShape(12.dp))
+                    modifier = Modifier.fillMaxWidth().background(AppTheme.color.primary,RoundedCornerShape(12.dp))
                         .clickAnimation { onMarkAsRead() }
                         .padding(horizontal = 16.dp, vertical = 10.dp),
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
                         text = "تحديد كمقروء",
-                        color = AppTheme.color.textSecondary,
+                        color = AppTheme.color.bg,
                         style = AppTheme.textStyle.body.small,
                     )
                 }

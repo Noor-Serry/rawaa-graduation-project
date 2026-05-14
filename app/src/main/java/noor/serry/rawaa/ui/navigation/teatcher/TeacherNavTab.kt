@@ -20,18 +20,17 @@ import noor.serry.rawaa.R
 enum class TeacherNavTab {
     HOME, STUDENTS, ASSESSMENT, COURSES, PROFILE
 }
-fun NavKey.toNavTab(): TeacherNavTab? {
-    return when (this) {
-        TeacherRouteKeys.Home -> TeacherNavTab.HOME
-        TeacherRouteKeys.Students -> TeacherNavTab.STUDENTS
-        TeacherRouteKeys.Assessment -> TeacherNavTab.ASSESSMENT
-        TeacherRouteKeys.Courses -> TeacherNavTab.COURSES
-        TeacherRouteKeys.Profile -> TeacherNavTab.PROFILE
 
-        is TeacherRouteKeys.StudentProfile -> null
-        else -> {null }
-    }
+fun NavKey.toNavTab(): TeacherNavTab? = when (this) {
+    TeacherRouteKeys.Home             -> TeacherNavTab.HOME
+    TeacherRouteKeys.Students         -> TeacherNavTab.STUDENTS
+    TeacherRouteKeys.Assessment       -> TeacherNavTab.ASSESSMENT
+    TeacherRouteKeys.Courses          -> TeacherNavTab.COURSES
+    TeacherRouteKeys.Profile          -> TeacherNavTab.PROFILE
+    is TeacherRouteKeys.StudentProfile -> null
+    else                              -> null
 }
+
 data class TeacherBottomNavItem(
     val tab: TeacherNavTab,
     val iconRes: Int,
@@ -45,18 +44,20 @@ fun HomeTeacherBottomNav(
     onTabSelected: (TeacherBottomNavItem) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    // RTL: first item in the list = rightmost on screen.
+    // Home must be rightmost → HOME goes first.
     val items = listOf(
-        TeacherBottomNavItem(TeacherNavTab.PROFILE,    R.drawable.person,          R.string.nav_profile,    TeacherRouteKeys.Profile),
-        TeacherBottomNavItem(TeacherNavTab.STUDENTS,   R.drawable.ic_person,     R.string.nav_students,   TeacherRouteKeys.Students),
-        TeacherBottomNavItem(TeacherNavTab.ASSESSMENT, R.drawable.badge,   R.string.nav_assessment, TeacherRouteKeys.Assessment),
-        TeacherBottomNavItem(TeacherNavTab.COURSES,    R.drawable.ic_book,         R.string.nav_courses,    TeacherRouteKeys.Courses),
-        TeacherBottomNavItem(TeacherNavTab.HOME,       R.drawable.ic_home,         R.string.nav_home,       TeacherRouteKeys.Home),
+        TeacherBottomNavItem(TeacherNavTab.HOME,       R.drawable.ic_home,   R.string.nav_home,       TeacherRouteKeys.Home),
+        TeacherBottomNavItem(TeacherNavTab.COURSES,    R.drawable.ic_book,   R.string.nav_courses,    TeacherRouteKeys.Courses),
+        TeacherBottomNavItem(TeacherNavTab.ASSESSMENT, R.drawable.badge,     R.string.nav_assessment, TeacherRouteKeys.Assessment),
+        TeacherBottomNavItem(TeacherNavTab.STUDENTS,   R.drawable.ic_person, R.string.nav_students,   TeacherRouteKeys.Students),
+        TeacherBottomNavItem(TeacherNavTab.PROFILE,    R.drawable.person,    R.string.nav_profile,    TeacherRouteKeys.Profile),
     )
 
     Surface(
-        modifier = modifier.fillMaxWidth(),
+        modifier        = modifier.fillMaxWidth(),
         shadowElevation = 12.dp,
-        color = Color.White,
+        color           = Color.White,
     ) {
         Row(
             modifier = Modifier
@@ -64,13 +65,13 @@ fun HomeTeacherBottomNav(
                 .navigationBarsPadding()
                 .padding(horizontal = 8.dp, vertical = 10.dp),
             horizontalArrangement = Arrangement.SpaceAround,
-            verticalAlignment = Alignment.CenterVertically,
+            verticalAlignment     = Alignment.CenterVertically,
         ) {
             items.forEach { item ->
                 TeacherBottomNavItemView(
-                    item = item,
+                    item       = item,
                     isSelected = selectedTab == item.tab,
-                    onClick = { onTabSelected(item) },
+                    onClick    = { onTabSelected(item) },
                 )
             }
         }
@@ -92,28 +93,28 @@ private fun TeacherBottomNavItemView(
         verticalArrangement = Arrangement.spacedBy(3.dp),
     ) {
         Box(
-            modifier = Modifier
+            modifier         = Modifier
                 .background(bgColor, RoundedCornerShape(12.dp))
                 .padding(horizontal = 12.dp, vertical = 6.dp),
             contentAlignment = Alignment.Center,
         ) {
             IconButton(
-                onClick = onClick,
+                onClick  = onClick,
                 modifier = Modifier.size(24.dp),
             ) {
                 Icon(
-                    painter = painterResource(item.iconRes),
+                    painter            = painterResource(item.iconRes),
                     contentDescription = stringResource(item.labelRes),
-                    tint = iconTint,
-                    modifier = Modifier.size(22.dp),
+                    tint               = iconTint,
+                    modifier           = Modifier.size(22.dp),
                 )
             }
         }
         Text(
-            text = stringResource(item.labelRes),
-            fontSize = 11.sp,
+            text       = stringResource(item.labelRes),
+            fontSize   = 11.sp,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-            color = labelColor,
+            color      = labelColor,
         )
     }
 }

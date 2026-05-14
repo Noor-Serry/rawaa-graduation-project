@@ -20,4 +20,6 @@ sealed interface TeacherRouteKeys : NavKey {
     data object Profile : TeacherRouteKeys
     @Serializable
     data class StudentProfile(val studentId: Int) : TeacherRouteKeys
+    @Serializable
+    data object PrivacyPolice : TeacherRouteKeys
 }

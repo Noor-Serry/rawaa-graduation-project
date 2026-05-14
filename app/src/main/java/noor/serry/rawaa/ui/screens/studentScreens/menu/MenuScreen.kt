@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -21,6 +20,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.zIndex
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collectLatest
+import noor.serry.rawaa.BackStackProvider
+import noor.serry.rawaa.ui.navigation.base.AppRoute
+import noor.serry.rawaa.ui.navigation.student.StudentBackStackProvider
+import noor.serry.rawaa.ui.navigation.student.StudentRouteKeys
 import noor.serry.rawaa.ui.screens.studentScreens.menu.components.StudentMenu
 
 /**
@@ -32,15 +37,19 @@ import noor.serry.rawaa.ui.screens.studentScreens.menu.components.StudentMenu
 fun MenuScreen(
     state: MenuUiState,
     interactionListener: MenuInteractionListener,
-    onLoggedOut: () -> Unit = {},
+    effects: Flow<MenuEffect>,
+    onLoggedOut: () -> Unit,
+    goToPrivacyPolice : () -> Unit
 ) {
-    LaunchedEffect(state.loggedOut) {
-        if (state.loggedOut) onLoggedOut()
-    }
+    // ── Handle one-time navigation effects ────────────────────────────────────
+    HandleEffects(
+        effects = effects, onLoggedOut = onLoggedOut,
+        goToPrivacyPolice = goToPrivacyPolice
+    )
 
     Box(modifier = Modifier.fillMaxSize()) {
 
-        // ── Dim scrim ─────────────────────────────────────────────────────
+        // ── Dim scrim ─────────────────────────────────────────────────────────
         AnimatedVisibility(
             visible  = state.isOpen,
             enter    = fadeIn(tween(250)),
@@ -61,7 +70,7 @@ fun MenuScreen(
             )
         }
 
-        // ── Side drawer panel — slides in from the right ──────────────────
+        // ── Side drawer panel — slides in from the right ──────────────────────
         AnimatedVisibility(
             visible  = state.isOpen,
             enter    = slideInHorizontally(
@@ -82,6 +91,37 @@ fun MenuScreen(
                 state               = state,
                 interactionListener = interactionListener,
             )
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Effects handler
+// ─────────────────────────────────────────────────────────────────────────────
+
+@Composable
+private fun HandleEffects(
+    effects: Flow<MenuEffect>,
+    onLoggedOut: () -> Unit,
+    goToPrivacyPolice : () -> Unit
+) {
+    LaunchedEffect(Unit) {
+        effects.collectLatest { effect ->
+            when (effect) {
+                MenuEffect.NavigateToLogin -> onLoggedOut()
+
+                MenuEffect.NavigateToPrivacyPolicy -> {
+                    goToPrivacyPolice()
+                }
+
+                MenuEffect.NavigateToSettings -> {
+                    // TODO: backStack.add(StudentRouteKeys.Settings)
+                }
+
+                MenuEffect.NavigateToHelpAndSupport -> {
+                    // TODO: backStack.add(StudentRouteKeys.HelpAndSupport)
+                }
+            }
         }
     }
 }

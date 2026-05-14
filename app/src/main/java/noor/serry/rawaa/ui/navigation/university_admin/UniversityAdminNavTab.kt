@@ -16,8 +16,6 @@ import androidx.compose.ui.unit.sp
 import noor.serry.designsystem.design.AppTheme
 import noor.serry.rawaa.R
 
-// ── Tabs ─────────────────────────────────────────────────────────────────────
-
 enum class UniversityAdminNavTab {
     DASHBOARD, USERS, COURSES, DEPARTMENTS, MORE
 }
@@ -29,14 +27,14 @@ data class UniversityAdminBottomNavItem(
     val route: UniversityAdminRouteKeys,
 )
 
-// ── Bottom nav composable ─────────────────────────────────────────────────────
-
 @Composable
 fun UniversityAdminBottomNav(
     selectedTab: UniversityAdminNavTab,
     onTabSelected: (UniversityAdminBottomNavItem) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    // RTL: first item in the list = rightmost on screen.
+    // Home (Dashboard) must be rightmost → DASHBOARD goes first.
     val items = listOf(
         UniversityAdminBottomNavItem(
             tab      = UniversityAdminNavTab.DASHBOARD,
@@ -46,25 +44,25 @@ fun UniversityAdminBottomNav(
         ),
         UniversityAdminBottomNavItem(
             tab      = UniversityAdminNavTab.USERS,
-            iconRes  = R.drawable.ic_person,          // use your existing users/students icon
+            iconRes  = R.drawable.ic_person,
             labelRes = R.string.nav_users,
             route    = UniversityAdminRouteKeys.Users,
         ),
         UniversityAdminBottomNavItem(
             tab      = UniversityAdminNavTab.COURSES,
-            iconRes  = R.drawable.ic_assignment,           // use your existing courses icon
+            iconRes  = R.drawable.ic_assignment,
             labelRes = R.string.nav_courses,
             route    = UniversityAdminRouteKeys.Courses,
         ),
         UniversityAdminBottomNavItem(
             tab      = UniversityAdminNavTab.DEPARTMENTS,
-            iconRes  = R.drawable.university,        // add drawable res
+            iconRes  = R.drawable.university,
             labelRes = R.string.nav_departments,
             route    = UniversityAdminRouteKeys.Departments,
         ),
         UniversityAdminBottomNavItem(
             tab      = UniversityAdminNavTab.MORE,
-            iconRes  = R.drawable.settings,              // use your existing menu/more icon
+            iconRes  = R.drawable.settings,
             labelRes = R.string.nav_profile,
             route    = UniversityAdminRouteKeys.Settings,
         ),
@@ -76,7 +74,7 @@ fun UniversityAdminBottomNav(
         color           = Color.White,
     ) {
         Row(
-            modifier              = Modifier
+            modifier = Modifier
                 .fillMaxWidth()
                 .navigationBarsPadding()
                 .padding(horizontal = 8.dp, vertical = 10.dp),
@@ -137,11 +135,11 @@ private fun UniversityAdminNavItemView(
 
 // Helper: derive tab from a route key
 fun UniversityAdminRouteKeys.toNavTab(): UniversityAdminNavTab = when (this) {
-    UniversityAdminRouteKeys.Dashboard   -> UniversityAdminNavTab.DASHBOARD
+    UniversityAdminRouteKeys.Dashboard             -> UniversityAdminNavTab.DASHBOARD
     UniversityAdminRouteKeys.Users,
     is UniversityAdminRouteKeys.StudentDetail,
-    is UniversityAdminRouteKeys.EmployeeDetail -> UniversityAdminNavTab.USERS
-    UniversityAdminRouteKeys.Courses     -> UniversityAdminNavTab.COURSES
-    UniversityAdminRouteKeys.Departments       -> UniversityAdminNavTab.DEPARTMENTS
-    else                                       -> UniversityAdminNavTab.MORE
+    is UniversityAdminRouteKeys.EmployeeDetail     -> UniversityAdminNavTab.USERS
+    UniversityAdminRouteKeys.Courses               -> UniversityAdminNavTab.COURSES
+    UniversityAdminRouteKeys.Departments           -> UniversityAdminNavTab.DEPARTMENTS
+    else                                           -> UniversityAdminNavTab.MORE
 }

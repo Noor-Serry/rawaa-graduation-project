@@ -23,7 +23,7 @@ class OnboardingViewModel(
     }
 
     override fun onClickStartNow() {
-        sendNewNavigationEffect(OnboardingEffect.NavigateToRegister)
+        sendNewNavigationEffect(OnboardingEffect.NavigateToLogin)
     }
 
     override fun onClickLogin() {

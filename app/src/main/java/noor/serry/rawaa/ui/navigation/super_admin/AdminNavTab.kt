@@ -33,6 +33,8 @@ fun HomeAdminBottomNav(
     onTabSelected: (AdminBottomNavItem) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    // RTL: first item in the list = rightmost on screen.
+    // Home must be rightmost → HOME goes first.
     val items = listOf(
         AdminBottomNavItem(
             tab      = AdminNavTab.HOME,
@@ -42,22 +44,22 @@ fun HomeAdminBottomNav(
         ),
         AdminBottomNavItem(
             tab      = AdminNavTab.UNIVERSITIES,
-            iconRes  = R.drawable.university,      // add this drawable to your res
-            labelRes = R.string.nav_universities,     // add this string resource
+            iconRes  = R.drawable.university,
+            labelRes = R.string.nav_universities,
             route    = AdminRouteKeys.Universities,
         ),
         AdminBottomNavItem(
             tab      = AdminNavTab.ADD_UNIVERSITY,
-            iconRes  = R.drawable.outline_add_home_work_24,  // add this drawable to your res
-            labelRes = R.string.add_university,   // add this string resource
+            iconRes  = R.drawable.outline_add_home_work_24,
+            labelRes = R.string.add_university,
             route    = AdminRouteKeys.AddUniversity,
         ),
     )
 
     Surface(
-        modifier      = modifier.fillMaxWidth(),
+        modifier        = modifier.fillMaxWidth(),
         shadowElevation = 12.dp,
-        color         = Color.White,
+        color           = Color.White,
     ) {
         Row(
             modifier = Modifier
@@ -93,7 +95,7 @@ private fun AdminBottomNavItemView(
         verticalArrangement = Arrangement.spacedBy(3.dp),
     ) {
         Box(
-            modifier = Modifier
+            modifier         = Modifier
                 .background(bgColor, RoundedCornerShape(12.dp))
                 .padding(horizontal = 12.dp, vertical = 6.dp),
             contentAlignment = Alignment.Center,

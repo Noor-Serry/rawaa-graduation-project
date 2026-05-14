@@ -59,7 +59,6 @@ class TokenDataStore(private val dataStore: DataStore<Preferences>) {
             prefs.remove(KEY_TOKEN)
             prefs.remove(KEY_SLUG)
             prefs.remove(KEY_ROLE)
-            prefs.remove(KEY_ONBOARDING_SEEN)
         }
     }
 

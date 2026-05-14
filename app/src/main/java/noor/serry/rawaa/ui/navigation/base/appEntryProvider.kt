@@ -9,6 +9,7 @@ import noor.serry.rawaa.ui.navigation.student.StudentEntryPoint
 import noor.serry.rawaa.ui.navigation.teatcher.TeacherEntryPoint
 import noor.serry.rawaa.ui.navigation.super_admin.AdminEntryPoint          // super-admin (unchanged)
 import noor.serry.rawaa.ui.navigation.university_admin.UniversityAdminEntryPoint  // university admin (new)
+import noor.serry.rawaa.ui.screens.studentScreens.menu.PrivacyPolicyScreen
 
 val appEntryProvider: (NavKey) -> NavEntry<NavKey> = entryProvider {
 

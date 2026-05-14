@@ -53,7 +53,9 @@ fun NotificationsScreen(
     val state by viewModel.state.collectAsState()
 
     HandleEffects(effects = viewModel.effect)
-
+    LaunchedEffect(Unit) {
+        viewModel.load()
+    }
     NotificationsContent(
         state = state,
         interactionListener = viewModel

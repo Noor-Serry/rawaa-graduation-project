@@ -9,6 +9,7 @@ import noor.serry.rawaa.ui.screens.grading_teacher.GradingScreen
 import noor.serry.rawaa.ui.screens.home_teacher.HomeTeacherScreen
 import noor.serry.rawaa.ui.screens.notifications.NotificationsScreen
 import noor.serry.rawaa.ui.screens.profile_teacher.ProfileTeacherScreen
+import noor.serry.rawaa.ui.screens.studentScreens.menu.PrivacyPolicyScreen
 import noor.serry.rawaa.ui.screens.student_profile_teacher.StudentProfileScreen
 import noor.serry.rawaa.ui.screens.students_teacher.StudentsScreen
 
@@ -36,5 +37,9 @@ val teacherEntryProvider: (NavKey) -> NavEntry<NavKey> = entryProvider {
 
     entry<TeacherRouteKeys.Notifications> {
         NotificationsScreen()
+    }
+
+    entry<TeacherRouteKeys.PrivacyPolice> {
+        PrivacyPolicyScreen()
     }
 }

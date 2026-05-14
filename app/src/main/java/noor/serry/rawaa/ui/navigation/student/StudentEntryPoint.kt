@@ -20,8 +20,6 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import noor.serry.designsystem.components.snackbar.SnackBarHost
 import noor.serry.designsystem.design.AppTheme
-import noor.serry.rawaa.ui.navigation.student.HomeNavTab
-import noor.serry.rawaa.ui.navigation.student.HomeStudentBottomNav
 import noor.serry.rawaa.ui.screens.studentScreens.menu.MenuScreen
 import noor.serry.rawaa.ui.screens.studentScreens.menu.MenuViewModel
 import noor.serry.rawaa.ui.screens.studentScreens.menu.components.StudentHeader
@@ -30,7 +28,7 @@ import org.koin.androidx.compose.koinViewModel
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun StudentEntryPoint() {
-    val backStack = rememberNavBackStack(StudentRouteKeys.Home)
+    val  backStack  = rememberNavBackStack(StudentRouteKeys.Home)
 
     // Derive the selected tab from the last entry in the backstack —
     // same pattern as TeacherEntryPoint. Falls back to HOME for any
@@ -41,7 +39,7 @@ fun StudentEntryPoint() {
 
     // ONE ViewModel instance — shared by the header, the scrim, and the drawer panel.
     val menuViewModel: MenuViewModel = koinViewModel()
-    val menuState by menuViewModel.uiState.collectAsState()
+    val menuState by menuViewModel.state.collectAsState()
 
     CompositionLocalProvider(
         StudentBackStackProvider provides backStack
@@ -87,8 +85,11 @@ fun StudentEntryPoint() {
 
                 // Drawer overlay — sits on top of Scaffold, same Box
                 MenuScreen(
-                    state               = menuState,
+                    state = menuState,
                     interactionListener = menuViewModel,
+                    onLoggedOut = { backStack.clear() },
+                    effects = menuViewModel.effect,
+                    goToPrivacyPolice = {backStack.add(StudentRouteKeys.PrivacyPolice) },
                 )
 
                 SnackBarHost(

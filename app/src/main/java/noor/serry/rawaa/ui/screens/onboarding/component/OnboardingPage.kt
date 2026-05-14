@@ -77,23 +77,7 @@ fun OnboardingPage(
                         .fillMaxWidth(),
                     roundedCornerSize = 10.dp
                 )
-                BaseButton(
-                    text = stringResource(R.string.already_have_an_account),
-                    onClick = onClickLogin,
-                    modifier = Modifier
-                        .padding(horizontal = 32.dp)
-                        .padding(top = 8.dp)
-                        .height(56.dp)
-                        .fillMaxWidth()
-                        .border(
-                            width = 1.dp,
-                            color = AppTheme.color.primary,
-                            shape = RoundedCornerShape(10.dp)
-                        ),
-                    backgroundColor = AppTheme.color.bg,
-                    textColor = AppTheme.color.primary,
-                    roundedCornerSize = 10.dp
-                )
+
             } else {
                 BaseButton(
                     text = stringResource(R.string.next),

@@ -20,6 +20,7 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import noor.serry.designsystem.components.snackbar.SnackBarHost
 import noor.serry.designsystem.design.AppTheme
+import noor.serry.rawaa.ui.navigation.student.StudentRouteKeys
 import noor.serry.rawaa.ui.screens.studentScreens.menu.MenuScreen
 import noor.serry.rawaa.ui.screens.studentScreens.menu.MenuViewModel
 import noor.serry.rawaa.ui.screens.studentScreens.menu.components.StudentHeader
@@ -36,7 +37,7 @@ fun TeacherEntryPoint() {
 
     // ONE ViewModel instance — shared by the header, the scrim, and the drawer panel.
     val menuViewModel: MenuViewModel = koinViewModel()
-    val menuState by menuViewModel.uiState.collectAsState()
+    val menuState by menuViewModel.state.collectAsState()
 
     CompositionLocalProvider(
         TeacherBackStackProvider provides backStack
@@ -79,8 +80,11 @@ fun TeacherEntryPoint() {
 
                 // Drawer overlay — sits on top of Scaffold, same Box
                 MenuScreen(
-                    state               = menuState,
+                    state = menuState,
                     interactionListener = menuViewModel,
+                    onLoggedOut = { backStack.clear() },
+                    effects = menuViewModel.effect,
+                    goToPrivacyPolice = {backStack.add(StudentRouteKeys.PrivacyPolice) },
                 )
 
                 SnackBarHost(
