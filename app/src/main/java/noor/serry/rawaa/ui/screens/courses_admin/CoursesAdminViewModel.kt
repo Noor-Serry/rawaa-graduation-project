@@ -20,18 +20,18 @@ class CoursesAdminViewModel(
         updateState { it.copy(isLoading = true, errorMessage = null) }
         tryToExecute(
             action = {
-                val coursesActive   = repository.getCourses(isActive = 1)
-                val coursesInactive = repository.getCourses(isActive = 0)
-                val departments     = repository.getDepartments()
-                Triple(coursesActive, coursesInactive, departments)
+                // Only fetch active courses + departments on first load.
+                // Inactive courses are fetched lazily when the user taps that tab.
+                val coursesActive = repository.getCourses(isActive = 1)
+                val departments   = repository.getDepartments()
+                coursesActive to departments
             },
-            onSuccess = { (activeResp, inactiveResp, depsResp) ->
+            onSuccess = { (activeResp, depsResp) ->
                 updateState { current ->
                     current.copy(
-                        isLoading       = false,
-                        activeCourses   = activeResp.data.map { it.toCourseAdminItem() },
-                        inactiveCourses = inactiveResp.data.map { it.toCourseAdminItem() },
-                        departments     = depsResp.data?.map { it.toDeptFilterItem() } ?: emptyList(),
+                        isLoading     = false,
+                        activeCourses = activeResp.data.map { it.toCourseAdminItem() },
+                        departments   = depsResp.data?.map { it.toDeptFilterItem() } ?: emptyList(),
                     )
                 }
             },
@@ -44,38 +44,63 @@ class CoursesAdminViewModel(
 
     override fun onTabSelected(tab: CoursesAdminUiState.CourseAdminTab) {
         updateState { it.copy(selectedTab = tab) }
+        // Fire the inactive request only on first visit to that tab.
+        if (tab == CoursesAdminUiState.CourseAdminTab.INACTIVE &&
+            state.value.inactiveCourses.isEmpty()
+        ) {
+            loadInactive(state.value.selectedDepartmentId)
+        }
     }
 
     override fun onDepartmentFilterSelected(departmentId: Int?) {
         updateState { it.copy(selectedDepartmentId = departmentId) }
-        loadFiltered(departmentId)
+        // Reload whichever tab is currently visible.
+        if (state.value.selectedTab == CoursesAdminUiState.CourseAdminTab.ACTIVE) {
+            loadActive(departmentId)
+        } else {
+            loadInactive(departmentId)
+        }
     }
 
     override fun onCourseClicked(courseId: Int) {
         sendNewNavigationEffect(CoursesAdminEffect.NavigateToCourseDetail(courseId))
     }
 
-    private fun loadFiltered(departmentId: Int?) {
+    // ── Private loaders ───────────────────────────────────────────────────────
+
+    private fun loadActive(departmentId: Int?) {
         tryToExecute(
-            action = {
-                val active   = repository.getCourses(isActive = 1, departmentId = departmentId)
-                val inactive = repository.getCourses(isActive = 0, departmentId = departmentId)
-                active to inactive
+            action = { repository.getCourses(isActive = 1, departmentId = departmentId) },
+            onSuccess = { resp ->
+                updateState { current ->
+                    current.copy(activeCourses = resp.data.map { it.toCourseAdminItem() })
+                }
             },
-            onSuccess = { (active, inactive) ->
+            dispatcher = dispatchers.IO,
+        )
+    }
+
+    private fun loadInactive(departmentId: Int?) {
+        updateState { it.copy(isLoadingInactive = true) }
+        tryToExecute(
+            action = { repository.getCourses(isActive = 0, departmentId = departmentId) },
+            onSuccess = { resp ->
                 updateState { current ->
                     current.copy(
-                        activeCourses   = active.data.map { it.toCourseAdminItem() },
-                        inactiveCourses = inactive.data.map { it.toCourseAdminItem() },
+                        isLoadingInactive = false,
+                        inactiveCourses   = resp.data.map { it.toCourseAdminItem() },
                     )
                 }
+            },
+            onError = { e ->
+                updateState { it.copy(isLoadingInactive = false, errorMessage = e.message) }
             },
             dispatcher = dispatchers.IO,
         )
     }
 }
 
-// ── Mappers ──────────────────────────────────────────────────────────────────
+// ── Mappers ───────────────────────────────────────────────────────────────────
 
 fun CourseDto.toCourseAdminItem() = CoursesAdminUiState.CourseAdminItem(
     id             = id,

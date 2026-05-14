@@ -25,6 +25,8 @@ import kotlinx.coroutines.flow.collectLatest
 import noor.serry.designsystem.components.BaseButton
 import noor.serry.designsystem.components.LabelInputField
 import noor.serry.designsystem.components.Text
+import noor.serry.designsystem.components.snackbar.SnackBarManager
+import noor.serry.designsystem.components.snackbar.SnackBarUiMessage
 import noor.serry.designsystem.design.AppTheme
 import noor.serry.rawaa.R
 import noor.serry.rawaa.ui.navigation.university_admin.UniversityAdminBackStackProvider
@@ -46,9 +48,24 @@ fun AddUserScreen(
     LaunchedEffect(Unit) {
         viewModel.effect.collectLatest { effect ->
             when (effect) {
-                is AddUserEffect.UserCreatedSuccessfully -> backStack.removeLastOrNull()
-                is AddUserEffect.ShowError               -> { /* parent snackbar / toast */ }
-                is AddUserEffect.Dismissed               -> backStack.removeLastOrNull()
+                is AddUserEffect.UserCreatedSuccessfully -> {
+                    SnackBarManager.show(
+                        SnackBarUiMessage(
+                            messageRes = effect.message,
+                            isSuccess = true,
+                        )
+                    )
+                    backStack.removeLastOrNull()
+                }
+                is AddUserEffect.ShowError -> {
+                    SnackBarManager.show(
+                        SnackBarUiMessage(
+                            messageRes = effect.message,
+                            isSuccess  = false,
+                        )
+                    )
+                }
+                is AddUserEffect.Dismissed -> backStack.removeLastOrNull()
             }
         }
     }
@@ -256,22 +273,7 @@ private fun AddUserContent(
         }
 
         // ── API-level error banner ────────────────────────────────────────────
-        if (state.errorMessage != null) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(Color(0xFFFEE2E2))
-                    .padding(horizontal = 14.dp, vertical = 10.dp),
-            ) {
-                Text(
-                    text  = state.errorMessage,
-                    color = Color(0xFFDC2626),
-                    style = AppTheme.textStyle.body.small,
-                )
-            }
-            Spacer(Modifier.height(12.dp))
-        }
+
 
         // ── Buttons ───────────────────────────────────────────────────────────
         Spacer(Modifier.height(8.dp))

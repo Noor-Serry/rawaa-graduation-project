@@ -7,6 +7,7 @@ data class CoursesAdminUiState(
     val departments: List<DeptFilterItem> = emptyList(),
     val selectedDepartmentId: Int? = null,
     val isLoading: Boolean = false,
+    val isLoadingInactive: Boolean = false,
     val errorMessage: String? = null,
 ) {
     // From CourseDto

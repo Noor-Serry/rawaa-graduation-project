@@ -54,7 +54,11 @@ fun UsersAdminScreen(
     viewModel: UsersAdminViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
-
+    LaunchedEffect(
+        Unit
+    ) {
+        viewModel.load()
+    }
     HandleEffects(effects = viewModel.effect)
 
     when {

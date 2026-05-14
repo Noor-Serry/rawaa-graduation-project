@@ -166,7 +166,9 @@ class AddUserViewModel(
                 }
             },
             onSuccess = {
+                if (!it.success) throw Exception(it.message ?: "Unknown error")
                 updateState { it.copy(isSubmitting = false) }
+                resetFields()
                 sendNewEffect(AddUserEffect.UserCreatedSuccessfully("تم إضافة المستخدم بنجاح"))
             },
             onError = { e ->
@@ -186,5 +188,22 @@ class AddUserViewModel(
 
     override fun onDismissClicked() {
         sendNewEffect(AddUserEffect.Dismissed)
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    /**
+     * Resets all form fields back to their initial values while preserving
+     * the pre-loaded [AddUserUiState.availableDepartments] and
+     * [AddUserUiState.universitySlug] so a second submission doesn't require
+     * another network call.
+     */
+    private fun resetFields() {
+        updateState { current ->
+            AddUserUiState(
+                availableDepartments = current.availableDepartments,
+                universitySlug       = current.universitySlug,
+            )
+        }
     }
 }
