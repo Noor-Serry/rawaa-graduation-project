@@ -18,6 +18,6 @@ data class LoginUiState(
 enum class LoginRole(val label: String, val apiValue: String) {
     STUDENT("طالب", "student"),
     TEACHER("دكتور", "doctor"),
-    EMPLOYEE("موظف", "employee"),
-    ADMIN("أدمن", "admin"),
+    EMPLOYEE("ادمن جامعه", "employee"),
+    ADMIN("أدمن عام", "admin"),
 }

@@ -8,6 +8,9 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.ui.platform.LocalView
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
+import com.microsoft.clarity.Clarity
+import com.microsoft.clarity.ClarityConfig
+import com.microsoft.clarity.models.LogLevel
 import noor.serry.designsystem.design.RawaaTheme
 import noor.serry.rawaa.ui.MainUiState
 import noor.serry.rawaa.ui.MainViewModel
@@ -18,7 +21,10 @@ class MainActivity : ComponentActivity() {
     // Resolved via Koin as a single (app-scoped) instance so RawaaApp
     // can observe the exact same StateFlow.
     private val mainViewModel: MainViewModel by viewModel()
-
+    val config = ClarityConfig(
+        projectId = "wqjdlv9iae",
+        logLevel = LogLevel.Verbose // Note: Use "LogLevel.Verbose" value while testing to debug initialization issues.
+    )
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -30,6 +36,8 @@ class MainActivity : ComponentActivity() {
         splashScreen.setKeepOnScreenCondition {
             mainViewModel.uiState.value == MainUiState.Loading
         }
+
+        Clarity.initialize(applicationContext, config)
 
         setContent {
             RawaaTheme {

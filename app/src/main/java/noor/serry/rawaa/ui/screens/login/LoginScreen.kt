@@ -1,5 +1,11 @@
 package noor.serry.rawaa.ui.screens.login
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -185,56 +191,60 @@ private fun LoginContent(
                     roundedCornerSize = 8.dp,
                 )
             }
-
-            // ── Divider ───────────────────────────────────────────────────────
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 24.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                Spacer(
-                    Modifier
-                        .height(1.dp)
-                        .weight(1f)
-                        .align(Alignment.CenterVertically)
-                        .background(AppTheme.color.border)
-                )
-                Text(
-                    text = stringResource(R.string.or),
-                    color = AppTheme.color.textSecondary,
-                    style = AppTheme.textStyle.body.small.copy(fontWeight = FontWeight.Normal)
-                )
-                Spacer(
-                    Modifier
-                        .height(1.dp)
-                        .weight(1f)
-                        .align(Alignment.CenterVertically)
-                        .background(AppTheme.color.border)
-                )
-            }
-
             // ── Google login ──────────────────────────────────────────────────
-            BaseButton(
-                text = stringResource(R.string.login_with_google),
-                onClick = interactionListener::onGoogleLoginClick,
-                modifier = Modifier.padding(top = 12.dp),
-                roundedCornerSize = 12.dp,
-                icon = painterResource(R.drawable.google),
-                backgroundColor = AppTheme.color.bg,
-                borderColor = AppTheme.color.border,
-                borderWidth = 1.17.dp,
-                textStyle = AppTheme.textStyle.body.medium,
-                textColor = AppTheme.color.primaryDark,
-                isMirror = false
-            )
+            // ── Divider + Google login (hidden for SuperAdmin) ────────────────────
+            val showGoogleLogin = state.selectedRole != LoginRole.ADMIN
 
-            ActionBanner(
-                text = stringResource(R.string.do_not_have_account),
-                actionText = stringResource(R.string.create_new_account),
-                onActionClick = interactionListener::onNavigateToRegister,
-                modifier = Modifier.padding(top = 24.dp)
-            )
+            AnimatedVisibility(
+                visible = showGoogleLogin,
+                enter = fadeIn(animationSpec = tween(300)) + expandVertically(animationSpec = tween(300)),
+                exit = fadeOut(animationSpec = tween(300)) + shrinkVertically(animationSpec = tween(300)),
+            ) {
+                Column {
+                    // ── Divider ───────────────────────────────────────────────────
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 24.dp),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Spacer(
+                            Modifier
+                                .height(1.dp)
+                                .weight(1f)
+                                .align(Alignment.CenterVertically)
+                                .background(AppTheme.color.border)
+                        )
+                        Text(
+                            text = stringResource(R.string.or),
+                            color = AppTheme.color.textSecondary,
+                            style = AppTheme.textStyle.body.small.copy(fontWeight = FontWeight.Normal)
+                        )
+                        Spacer(
+                            Modifier
+                                .height(1.dp)
+                                .weight(1f)
+                                .align(Alignment.CenterVertically)
+                                .background(AppTheme.color.border)
+                        )
+                    }
+
+                    // ── Google login ──────────────────────────────────────────────
+                    BaseButton(
+                        text = stringResource(R.string.login_with_google),
+                        onClick = interactionListener::onGoogleLoginClick,
+                        modifier = Modifier.padding(top = 12.dp),
+                        roundedCornerSize = 12.dp,
+                        icon = painterResource(R.drawable.google),
+                        backgroundColor = AppTheme.color.bg,
+                        borderColor = AppTheme.color.border,
+                        borderWidth = 1.17.dp,
+                        textStyle = AppTheme.textStyle.body.medium,
+                        textColor = AppTheme.color.primaryDark,
+                        isMirror = false
+                    )
+                }
+            }
         }
     }
 }

@@ -28,6 +28,7 @@ import noor.serry.designsystem.components.utils.clickAnimation
 import noor.serry.designsystem.design.AppTheme
 import noor.serry.rawaa.R
 import noor.serry.rawaa.ui.MainViewModel
+import noor.serry.rawaa.ui.navigation.university_admin.UniversityAdminBackStackProvider
 
 // ── Entry point ───────────────────────────────────────────────────────────────
 
@@ -512,10 +513,14 @@ private fun HandleEffects(
     effects: Flow<SettingsAdminEffect>,
     mainViewModel: MainViewModel,
 ) {
+    val navBackStack = UniversityAdminBackStackProvider.current
     LaunchedEffect(Unit) {
         effects.collectLatest { effect ->
             when (effect) {
-                SettingsAdminEffect.LoggedOut -> mainViewModel.onOnboardingCompleted()
+                SettingsAdminEffect.LoggedOut -> {
+                    mainViewModel.onOnboardingCompleted()
+                    navBackStack.clear()
+                }
             }
         }
     }

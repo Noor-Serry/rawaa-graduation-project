@@ -1,6 +1,7 @@
 package noor.serry.rawaa.ui.screens.settings_admin
 
 import noor.serry.rawaa.data.dto.UserDto
+import noor.serry.rawaa.data.local.TokenDataStore
 import noor.serry.rawaa.data.repository.UniversityRepository
 import noor.serry.rawaa.ui.base.BaseViewModel
 import noor.serry.rawaa.ui.base.DispatcherProvider
@@ -8,6 +9,7 @@ import noor.serry.rawaa.ui.base.DispatcherProvider
 class SettingsAdminViewModel(
     private val repository: UniversityRepository,
     private val dispatchers: DispatcherProvider,
+    private val tokenDataStore : TokenDataStore
 ) : BaseViewModel<SettingsAdminUiState, SettingsAdminEffect>(
     initialState = SettingsAdminUiState(isLoading = true),
     dispatcherProvider = dispatchers,
@@ -47,8 +49,12 @@ class SettingsAdminViewModel(
 
     override fun onLogoutClick() {
         tryToExecute(
-            action = { repository.logout() },
-            onSuccess = { sendNewNavigationEffect(SettingsAdminEffect.LoggedOut) },
+            action = { repository.logout()
+                tokenDataStore.clearToken()
+                     },
+            onSuccess = {
+
+                sendNewNavigationEffect(SettingsAdminEffect.LoggedOut) },
             onError   = { sendNewNavigationEffect(SettingsAdminEffect.LoggedOut) },
             dispatcher = dispatchers.IO,
         )

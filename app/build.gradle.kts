@@ -95,6 +95,9 @@ dependencies {
     // Coil
     implementation(libs.coil.compose)
     implementation(libs.coil.network.ktor3)
+
+
+    implementation("com.microsoft.clarity:clarity-compose:3.8.2")
 }
 
 tasks.register("generateFeature") {
