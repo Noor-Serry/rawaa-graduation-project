@@ -2,9 +2,7 @@ package noor.serry.rawaa.ui.screens.login
 
 import noor.serry.rawaa.data.dto.GoogleLoginRequest
 import noor.serry.rawaa.data.dto.LoginRequest
-import noor.serry.rawaa.data.dto.SuperAdminLoginRequest
 import noor.serry.rawaa.data.local.TokenDataStore
-import noor.serry.rawaa.data.repository.GoogleAuthDataSourceImpl
 import noor.serry.rawaa.data.repository.UniversityRepository
 import noor.serry.rawaa.ui.base.BaseViewModel
 import noor.serry.rawaa.ui.base.DispatcherProvider
@@ -13,7 +11,6 @@ class LoginViewModel(
     private val repository: UniversityRepository,
     private val tokenDataStore: TokenDataStore,
     private val dispatchers: DispatcherProvider,
-    private val googleAuthDataSource : GoogleAuthDataSourceImpl
 ) : BaseViewModel<LoginUiState, LoginEffect>(
     initialState = LoginUiState(),
     dispatcherProvider = dispatchers,
@@ -36,48 +33,6 @@ class LoginViewModel(
 
     override fun onLoginClick() = login()
 
-    override fun onGoogleLoginClick() {
-        val current = state.value
-
-        if (current.universitySlug.isBlank()) {
-            updateState { it.copy(slugError = "يرجى إدخال رمز الجامعة أولاً") }
-            return
-        }
-
-        loginWithGoogle()
-    }
-
-    fun loginWithGoogle() {
-        val current = state.value
-        updateState { it.copy(isLoading = true, generalError = null) }
-
-        tryToExecute(
-            action = {
-                val idToken = googleAuthDataSource.getIdToken()
-                    ?: return@tryToExecute null
-
-                val response = repository.loginWithGoogle(
-                    GoogleLoginRequest(
-                        idToken = idToken,
-                        universitySlug = current.universitySlug,
-                        role = current.selectedRole.apiValue,
-                    )
-                )
-                val authData = response.data ?: error("فشل تسجيل الدخول بـ Google: لا توجد بيانات")
-                tokenDataStore.saveToken(authData.token)
-                tokenDataStore.saveRole(authData.user.role)
-                authData.user.role
-            },
-            onSuccess = { role ->
-                updateState { it.copy(isLoading = false) }
-                if (role != null) sendNewNavigationEffect(roleToEffect(role, state.value.selectedRole))
-            },
-            onError = { e ->
-                updateState { it.copy(isLoading = false, generalError = e.message ?: "فشل تسجيل الدخول بـ Google") }
-            },
-            dispatcher = dispatchers.IO,
-        )
-    }
 
     override fun onNavigateToRegister() =
         sendNewNavigationEffect(LoginEffect.NavigateToRegister)

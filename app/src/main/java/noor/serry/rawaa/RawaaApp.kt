@@ -30,12 +30,10 @@ fun RawaaApp(
         MainUiState.ShowOnboarding -> AppRoute.Onboarding
         is MainUiState.ShowMain -> {
             val role = (uiState as MainUiState.ShowMain).role
-            Log.e("RawaaApp", "Resuming session as role=$role")
             roleToRoute(role)
         }
     }
 
-    Log.e("RawaaApp", "startDestination=$startDestination")
     val backStack = rememberNavBackStack(startDestination)
 
     CompositionLocalProvider(BackStackProvider provides backStack) {
@@ -62,7 +60,6 @@ fun RawaaApp(
 private fun roleToRoute(role: String): AppRoute = when (role) {
     "student"  -> AppRoute.StudentEntry
     "doctor"   -> AppRoute.TeacherEntry
-    "employee" -> AppRoute.TeacherEntry
     "admin"    -> AppRoute.AdminEntry
     "super"    -> AppRoute.SuperAdminEntry
     else       -> AppRoute.Login

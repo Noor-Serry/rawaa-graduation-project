@@ -19,15 +19,12 @@ import io.ktor.http.encodedPath
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 import noor.serry.rawaa.data.local.TokenDataStore
-import noor.serry.rawaa.data.remote.ApiClient
-import noor.serry.rawaa.data.repository.GoogleAuthDataSourceImpl
 import noor.serry.rawaa.data.repository.UniversityRepository
 import org.koin.android.ext.koin.androidContext
-import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 
 /** Base URL — change to your deployed backend host. */
-private const val BASE_URL = "http://192.168.1.50:80/university-api-v3"
+private const val BASE_URL = "http://192.168.1.50/university-api-v3"
 private val Context.dataStore by preferencesDataStore(name = "rawaa_prefs")
 
 val dataModule = module {
@@ -81,10 +78,6 @@ val dataModule = module {
 
     single { TokenDataStore(get()) }
 
-    // ── API client ────────────────────────────────────────────────────────────
-
-    single { ApiClient(client = get(), tokenStore = get(), baseUrl = BASE_URL) }
-    singleOf(::GoogleAuthDataSourceImpl)
 
     // ── Repository ────────────────────────────────────────────────────────────
 

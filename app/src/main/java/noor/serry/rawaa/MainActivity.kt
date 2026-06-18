@@ -18,12 +18,10 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class MainActivity : ComponentActivity() {
 
-    // Resolved via Koin as a single (app-scoped) instance so RawaaApp
-    // can observe the exact same StateFlow.
     private val mainViewModel: MainViewModel by viewModel()
     val config = ClarityConfig(
         projectId = "wqjdlv9iae",
-        logLevel = LogLevel.Verbose // Note: Use "LogLevel.Verbose" value while testing to debug initialization issues.
+        logLevel = LogLevel.None
     )
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,8 +29,6 @@ class MainActivity : ComponentActivity() {
         val splashScreen = installSplashScreen()
         enableEdgeToEdge()
 
-        // Keep the splash screen visible until MainViewModel has finished
-        // reading DataStore (i.e. state is no longer Loading).
         splashScreen.setKeepOnScreenCondition {
             mainViewModel.uiState.value == MainUiState.Loading
         }
@@ -46,8 +42,6 @@ class MainActivity : ComponentActivity() {
                 WindowCompat.getInsetsController(activity!!.window, view)
                     .isAppearanceLightStatusBars = true
 
-                // Pass the already-created ViewModel so RawaaApp
-                // doesn't create a second instance.
                 RawaaApp(mainViewModel = mainViewModel)
             }
         }

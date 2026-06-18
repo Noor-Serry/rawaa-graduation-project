@@ -115,11 +115,9 @@ private fun HandleEffects(
                 }
 
                 MenuEffect.NavigateToSettings -> {
-                    // TODO: backStack.add(StudentRouteKeys.Settings)
                 }
 
                 MenuEffect.NavigateToHelpAndSupport -> {
-                    // TODO: backStack.add(StudentRouteKeys.HelpAndSupport)
                 }
             }
         }

@@ -7,7 +7,6 @@ interface LoginInteractionListener {
     fun onRoleSelected(role: LoginRole)
     fun onPasswordVisibilityToggle()
     fun onLoginClick()
-    fun onGoogleLoginClick()
     fun onNavigateToRegister()
     fun onForgotPasswordClick()
 }

@@ -176,74 +176,14 @@ private fun LoginContent(
 
             // ── Forgot password + Login button ────────────────────────────────
             Column(Modifier.fillMaxWidth()) {
-                Text(
-                    text = stringResource(R.string.forgot_password),
-                    color = AppTheme.color.primary,
-                    style = AppTheme.textStyle.body.small,
-                    modifier = Modifier
-                        .padding(top = 18.dp)
-                        .align(Alignment.End),
-                )
                 BaseButton(
                     text = if (state.isLoading) "..." else stringResource(R.string.login),
                     onClick = interactionListener::onLoginClick,
                     modifier = Modifier.padding(top = 32.dp),
                     roundedCornerSize = 8.dp,
                 )
-            }
-            // ── Google login ──────────────────────────────────────────────────
-            // ── Divider + Google login (hidden for SuperAdmin) ────────────────────
-            val showGoogleLogin = state.selectedRole != LoginRole.ADMIN
 
-            AnimatedVisibility(
-                visible = showGoogleLogin,
-                enter = fadeIn(animationSpec = tween(300)) + expandVertically(animationSpec = tween(300)),
-                exit = fadeOut(animationSpec = tween(300)) + shrinkVertically(animationSpec = tween(300)),
-            ) {
-                Column {
-                    // ── Divider ───────────────────────────────────────────────────
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 24.dp),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        Spacer(
-                            Modifier
-                                .height(1.dp)
-                                .weight(1f)
-                                .align(Alignment.CenterVertically)
-                                .background(AppTheme.color.border)
-                        )
-                        Text(
-                            text = stringResource(R.string.or),
-                            color = AppTheme.color.textSecondary,
-                            style = AppTheme.textStyle.body.small.copy(fontWeight = FontWeight.Normal)
-                        )
-                        Spacer(
-                            Modifier
-                                .height(1.dp)
-                                .weight(1f)
-                                .align(Alignment.CenterVertically)
-                                .background(AppTheme.color.border)
-                        )
-                    }
 
-                    // ── Google login ──────────────────────────────────────────────
-                    BaseButton(
-                        text = stringResource(R.string.login_with_google),
-                        onClick = interactionListener::onGoogleLoginClick,
-                        modifier = Modifier.padding(top = 12.dp),
-                        roundedCornerSize = 12.dp,
-                        icon = painterResource(R.drawable.google),
-                        backgroundColor = AppTheme.color.bg,
-                        borderColor = AppTheme.color.border,
-                        borderWidth = 1.17.dp,
-                        textStyle = AppTheme.textStyle.body.medium,
-                        textColor = AppTheme.color.primaryDark,
-                        isMirror = false
-                    )
-                }
             }
         }
     }

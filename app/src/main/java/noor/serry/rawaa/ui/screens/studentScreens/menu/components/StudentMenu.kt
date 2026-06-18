@@ -117,29 +117,6 @@ fun StudentMenu(
                 )
             }
 
-            // Menu items
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-            ) {
-                MenuItemCard(
-                    label   = stringResource(R.string.settings),
-                    icon    = painterResource(R.drawable.settings),
-                    onClick = interactionListener::onSettingsClick,
-                )
-                MenuItemCard(
-                    label   = stringResource(R.string.help_and_support),
-                    icon    = painterResource(R.drawable.helpcircle),
-                    onClick = interactionListener::onHelpAndSupportClick,
-                )
-                MenuItemCard(
-                    label   = stringResource(R.string.privacy_policy),
-                    icon    = painterResource(R.drawable.shield),
-                    onClick = interactionListener::onPrivacyPolicyClick,
-                )
-            }
-
             // Version / copyright info
             Column(
                 modifier = Modifier
