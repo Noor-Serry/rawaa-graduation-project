@@ -1,6 +1,7 @@
 # Rawaa (رواء) — University Management Platform
 
 > A graduation project Android application that provides a unified academic management experience for Egyptian universities, serving students, teachers, university admins, and super admins from a single app.
+<img width="1558" height="125" alt="image" src="https://github.com/user-attachments/assets/9561e6a0-785c-4212-9112-65e3b9a75a49" />
 
 ---
 
